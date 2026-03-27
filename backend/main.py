@@ -1,0 +1,63 @@
+import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from routers import (
+    auth, registration, admin, students, subjects,
+    marks, fees, reports, sms, dashboard, settings, parent_portal
+)
+
+app = FastAPI(
+    title="Smart Schola API",
+    description="School Management System for Zambian Schools — ECZ Grading, PDF Reports, SMS Notifications",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        FRONTEND_URL,
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://*.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(auth.router)
+app.include_router(registration.router)
+app.include_router(admin.router)
+app.include_router(students.router)
+app.include_router(subjects.router)
+app.include_router(marks.router)
+app.include_router(fees.router)
+app.include_router(reports.router)
+app.include_router(sms.router)
+app.include_router(dashboard.router)
+app.include_router(settings.router)
+app.include_router(parent_portal.router)
+
+
+@app.get("/")
+def root():
+    return {
+        "name": "Smart Schola API",
+        "version": "1.0.0",
+        "status": "running",
+        "docs": "/docs",
+    }
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

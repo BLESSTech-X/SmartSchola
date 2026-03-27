@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Schola — Zambian School Management</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              navy: {
+                DEFAULT: '#0B1D3A',
+                50: '#E8EDF5',
+                100: '#C5D0E6',
+                200: '#8EA5C9',
+                300: '#5779AC',
+                400: '#2D508F',
+                500: '#0B1D3A',
+                600: '#091830',
+                700: '#071226',
+                800: '#050D1C',
+                900: '#030812',
+              },
+              gold: {
+                DEFAULT: '#F5A623',
+                50: '#FEF6E8',
+                100: '#FDECC4',
+                200: '#FBD88D',
+                300: '#F9C456',
+                400: '#F7B035',
+                500: '#F5A623',
+                600: '#D4870A',
+                700: '#A36608',
+                800: '#724605',
+                900: '#412703',
+              },
+            },
+            fontFamily: {
+              display: ['Playfair Display', 'Georgia', 'serif'],
+              sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            },
+          },
+        },
+      }
+    </script>
+
+    <style>
+      * { font-family: 'DM Sans', system-ui, sans-serif; }
+      h1, h2, h3, .font-display { font-family: 'Playfair Display', Georgia, serif; }
+
+      @keyframes gradient-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .animated-bg {
+        background: linear-gradient(-45deg, #0B1D3A, #0d2347, #091830, #142c52);
+        background-size: 400% 400%;
+        animation: gradient-shift 10s ease infinite;
+      }
+
+      @keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      .toast-enter { animation: slide-in 0.3s ease forwards; }
+
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .fade-in { animation: fade-in 0.3s ease forwards; }
+
+      .sidebar-link { transition: all 0.15s ease; }
+      .sidebar-link:hover { background: rgba(245,166,35,0.12); }
+      .sidebar-link.active { background: rgba(245,166,35,0.18); border-right: 3px solid #F5A623; }
+
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: #f1f1f1; }
+      ::-webkit-scrollbar-thumb { background: #c5d0e6; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #0B1D3A; }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
