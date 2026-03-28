@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 
-SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE_THIS_VERY_LONG_SECRET_KEY_IN_PRODUCTION_FOR_SMARTSCHOLA")
+SECRET_KEY = os.getenv("SECRET_KEY", "SmartSchola_Zambia_2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
