@@ -61,3 +61,11 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+@app.get("/secret-setup-admin")
+def setup_admin():
+    from init_db import init
+    try:
+        init() # This runs your script that creates the admin
+        return {"status": "Success", "message": "Admin user created for SmartSchola!"}
+    except Exception as e:
+        return {"status": "Error", "detail": str(e)}
