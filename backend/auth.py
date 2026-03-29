@@ -13,14 +13,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", "SmartSchola_Zambia_2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
-# Single shared CryptContext — never instantiate multiple
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Updated for Bcrypt compatibility
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
 
 security = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # Ensure we only hash the first 72 characters of any string
+    return pwd_context.hash(password[:72])
 
 
 def check_password(plain: str, hashed: str) -> bool:
