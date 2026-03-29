@@ -9,25 +9,33 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 
+# ── CONFIGURATION ──────────────────────────────────────────────────────────
+# Using a shorter fallback to avoid Bcrypt 72-byte overhead
 SECRET_KEY = os.getenv("SECRET_KEY", "SmartSchola_Zambia_2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
-# Updated for Bcrypt compatibility
+# Single shared CryptContext with explicit truncation error suppression
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
 
 security = HTTPBearer()
 
-
+# ── HASHING UTILITIES ──────────────────────────────────────────────────────
 def hash_password(password: str) -> str:
-    # Ensure we only hash the first 72 characters of any string
+    """
+    Manually truncate to 72 chars before hashing to prevent Bcrypt library crashes.
+    """
     return pwd_context.hash(password[:72])
 
 
 def check_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    """
+    Manually truncate the plain password to 72 chars to match the stored hash.
+    """
+    return pwd_context.verify(plain[:72], hashed)
 
 
+# ── JWT & AUTH ─────────────────────────────────────────────────────────────
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
