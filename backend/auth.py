@@ -11,7 +11,7 @@ import models
 
 # ── CONFIGURATION ──────────────────────────────────────────────────────────
 # Using a shorter fallback to avoid Bcrypt 72-byte overhead
-SECRET_KEY = os.getenv("SECRET_KEY", "SmartSchola_Zambia_2026")
+SECRET_KEY = os.getenv("SECRET_KEY", "BTX26")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
@@ -22,17 +22,12 @@ security = HTTPBearer()
 
 # ── HASHING UTILITIES ──────────────────────────────────────────────────────
 def hash_password(password: str) -> str:
-    """
-    Manually truncate to 72 chars before hashing to prevent Bcrypt library crashes.
-    """
-    return pwd_context.hash(password[:72])
-
+    # We only take the first 50 chars to leave room for the secret key
+    return pwd_context.hash(password[:50])
 
 def check_password(plain: str, hashed: str) -> bool:
-    """
-    Manually truncate the plain password to 72 chars to match the stored hash.
-    """
-    return pwd_context.verify(plain[:72], hashed)
+    # Must match the 50 char limit above
+    return pwd_context.verify(plain[:50], hashed)
 
 
 # ── JWT & AUTH ─────────────────────────────────────────────────────────────
