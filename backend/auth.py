@@ -16,19 +16,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"
 
 security = HTTPBearer()
 
-# ── NEW STABLE HASHING (No 72-byte limit) ──────────────────────────────────
+# ── STABLE HASHING (No 72-byte limit) ──────────────────────────────────────
 def hash_password(password: str) -> str:
-    """
-    Uses SHA-256. This is stable and has NO character limits.
-    """
     return hashlib.sha256(password.encode()).hexdigest()
 
 def check_password(plain: str, hashed: str) -> bool:
-    """
-    Compares the SHA-256 hash of the input to the stored hash.
-    """
     return hashlib.sha256(plain.encode()).hexdigest() == hashed
-
 
 # ── JWT & AUTH ─────────────────────────────────────────────────────────────
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -57,6 +50,21 @@ def get_current_user(
     user = db.query(models.User).filter(models.User.username == username).first()
     if user is None or not user.is_active:
         raise credentials_exception
+    return user
+
+# --- THIS WAS THE MISSING FUNCTION CAUSING THE CRASH ---
+def get_current_parent(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> models.User:
+    user = get_current_user(credentials, db)
+    if user.role != "parent":
+        raise HTTPException(status_code=403, detail="Parent access only")
+    profile = db.query(models.ParentProfile).filter(
+        models.ParentProfile.user_id == user.id
+    ).first()
+    if not profile or profile.approval_status != "approved":
+        raise HTTPException(status_code=403, detail="Parent account not approved")
     return user
 
 def require_roles(*roles):
