@@ -1,129 +1,43 @@
-"""
-SmartSchola Database Initialization Script
-Run once: python init_db.py
-Creates all tables and seeds/updates default admin, teacher, and parent accounts.
-"""
-from database import engine, SessionLocal
-from models import Base, User, TeacherProfile, ParentProfile, Student, School
+from database import engine, SessionLocal, Base
+from sqlalchemy import text
+import models
 from auth import hash_password
+import datetime
 
 def init():
-    # Create all tables in the database if they don't exist
-    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
-
     try:
-        # ── 1. School Information ──────────────────────────────────────────
-        school = db.query(School).first()
-        if not school:
-            school = School(
-                name="Smart Schola Demo School",
-                address="123 Education Road, Lusaka, Zambia",
-                headmaster="Mr. J. Banda",
-                phone="+260977000000",
-                email="admin@smartschola.zm",
-            )
-            db.add(school)
-            print("✅ Created demo school profile.")
+        # 1. Standard Sync
+        Base.metadata.create_all(bind=engine)
 
-        # ── 2. Admin User (Force Update to SHA-256) ────────────────────────
-        admin = db.query(User).filter_by(username="admin").first()
-        if not admin:
-            admin = User(
+        # 2. EMERGENCY FORCE: Manually add the balance column if it's missing
+        # This bypasses the SQLAlchemy check and talks directly to Supabase
+        print("BLESSTechX: Forcing 'balance' column...")
+        try:
+            db.execute(text("ALTER TABLE students ADD COLUMN IF NOT EXISTS balance FLOAT DEFAULT 0.0;"))
+            db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT FALSE;"))
+            db.commit()
+            print("Columns verified/added successfully.")
+        except Exception as column_error:
+            print(f"Column check skipped or already exists: {column_error}")
+
+        # 3. Ensure Admin exists
+        admin_user = db.query(models.User).filter_by(username="admin").first()
+        if not admin_user:
+            new_admin = models.User(
                 username="admin",
-                full_name="System Administrator",
+                full_name="BLESSTechX Admin",
                 role="admin",
-                hashed_password=hash_password("schola2024"),
-                is_active=True,
+                hashed_password=hash_password("admin123"),
+                is_active=True
             )
-            db.add(admin)
-            print("✅ Created NEW admin user — User: admin / Pass: schola2024")
-        else:
-            # This line fixes your "Login Failed" issue by overwriting old hashes
-            admin.hashed_password = hash_password("schola2024")
-            print("🔄 Updated EXISTING admin to SHA-256 password.")
+            db.add(new_admin)
+            db.commit()
 
-        # ── 3. Test Teacher ────────────────────────────────────────────────
-        teacher_user = db.query(User).filter_by(username="testteacher").first()
-        if not teacher_user:
-            teacher_user = User(
-                username="testteacher",
-                full_name="Mr. T. Phiri",
-                role="teacher",
-                hashed_password=hash_password("teacher1234"),
-                is_active=True,
-            )
-            db.add(teacher_user)
-            db.flush() 
-
-            profile = TeacherProfile(
-                user_id=teacher_user.id,
-                subjects_taught="Mathematics, Science",
-                classes_assigned="7A, 8B",
-                phone="+260977111111",
-                bio="Senior Educator specializing in STEM subjects.",
-                approval_status="approved",
-            )
-            db.add(profile)
-            print("✅ Created test teacher — User: testteacher / Pass: teacher1234")
-        else:
-            teacher_user.hashed_password = hash_password("teacher1234")
-            print("🔄 Updated EXISTING teacher to SHA-256 password.")
-
-        # ── 4. Sample Student (Needed for Parent Link) ─────────────────────
-        student = db.query(Student).first()
-        if not student:
-            student = Student(
-                first_name="Chanda",
-                last_name="Bwalya",
-                grade=7,
-                class_name="7A",
-                gender="Male",
-                parent_phone="+260971234567",
-            )
-            db.add(student)
-            db.flush()
-            print(f"✅ Created sample student: {student.first_name} {student.last_name}")
-
-        # ── 5. Test Parent ─────────────────────────────────────────────────
-        parent_username = "+260971234567"
-        parent_user = db.query(User).filter_by(username=parent_username).first()
-        
-        if not parent_user:
-            parent_user = User(
-                username=parent_username,
-                full_name="Mrs. Bwalya",
-                role="parent",
-                hashed_password=hash_password("123456"),
-                is_active=True,
-            )
-            db.add(parent_user)
-            db.flush()
-
-            parent_profile = ParentProfile(
-                user_id=parent_user.id,
-                student_id=student.id,
-                relationship_to_student="Mother",
-                phone=parent_username,
-                hashed_pin=hash_password("123456"),
-                approval_status="approved",
-            )
-            db.add(parent_profile)
-            print(f"✅ Created test parent — Phone: {parent_username} / PIN: 123456")
-        else:
-            parent_user.hashed_password = hash_password("123456")
-            print("🔄 Updated EXISTING parent to SHA-256 password.")
-
-        # Final Commit
-        db.commit()
-        print("\n🚀 SmartSchola Database Initialized & Synchronized!")
-
+        return True
     except Exception as e:
+        print(f"Error: {e}")
         db.rollback()
-        print(f"❌ Initialization Error: {e}")
-        raise
+        raise e
     finally:
         db.close()
-
-if __name__ == "__main__":
-    init()
