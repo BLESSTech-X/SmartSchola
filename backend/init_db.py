@@ -1,4 +1,5 @@
 """
+SmartSchola Database Initialization Script
 Run once: python init_db.py
 Creates all tables and seeds default admin, teacher, and parent accounts.
 """
@@ -7,11 +8,12 @@ from models import Base, User, TeacherProfile, ParentProfile, Student, School
 from auth import hash_password
 
 def init():
+    # Create all tables in the database if they don't exist
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
-        # ── School ────────────────────────────────────────────────────────────
+        # ── 1. School Information ──────────────────────────────────────────
         school = db.query(School).first()
         if not school:
             school = School(
@@ -22,22 +24,23 @@ def init():
                 email="admin@smartschola.zm",
             )
             db.add(school)
+            print("✅ Created demo school profile.")
 
-        # ── Admin ─────────────────────────────────────────────────────────────
+        # ── 2. Admin User ──────────────────────────────────────────────────
         if not db.query(User).filter_by(username="admin").first():
             admin = User(
                 username="admin",
                 full_name="System Administrator",
                 role="admin",
+                # This uses our truncated hash from auth.py
                 hashed_password=hash_password("schola2024"),
                 is_active=True,
             )
             db.add(admin)
-            print("Created admin user — username: admin / password: schola2024")
+            print("✅ Created admin user — User: admin / Pass: schola2024")
 
-        # ── Test Teacher ──────────────────────────────────────────────────────
-        teacher_user = db.query(User).filter_by(username="testteacher").first()
-        if not teacher_user:
+        # ── 3. Test Teacher ────────────────────────────────────────────────
+        if not db.query(User).filter_by(username="testteacher").first():
             teacher_user = User(
                 username="testteacher",
                 full_name="Mr. T. Phiri",
@@ -46,20 +49,20 @@ def init():
                 is_active=True,
             )
             db.add(teacher_user)
-            db.flush()
+            db.flush()  # Get ID for profile
+
             profile = TeacherProfile(
                 user_id=teacher_user.id,
-                subjects_taught="",
-                classes_assigned="7A,8B",
+                subjects_taught="Mathematics, Science",
+                classes_assigned="7A, 8B",
                 phone="+260977111111",
-                bio="Experienced mathematics teacher with 10 years of service.",
+                bio="Senior Educator specializing in STEM subjects.",
                 approval_status="approved",
             )
             db.add(profile)
-            print("Created test teacher — username: testteacher / password: teacher1234")
+            print("✅ Created test teacher — User: testteacher / Pass: teacher1234")
 
-        # ── Test Parent ───────────────────────────────────────────────────────
-        # Only add a sample student first so we can link the parent
+        # ── 4. Sample Student (Needed for Parent Link) ─────────────────────
         student = db.query(Student).first()
         if not student:
             student = Student(
@@ -72,12 +75,13 @@ def init():
             )
             db.add(student)
             db.flush()
-            print(f"Created sample student: {student.first_name} {student.last_name}")
+            print(f"✅ Created sample student: {student.first_name} {student.last_name}")
 
-        parent_user = db.query(User).filter_by(username="+260971234567").first()
-        if not parent_user:
+        # ── 5. Test Parent ─────────────────────────────────────────────────
+        parent_username = "+260971234567"
+        if not db.query(User).filter_by(username=parent_username).first():
             parent_user = User(
-                username="+260971234567",
+                username=parent_username,
                 full_name="Mrs. Bwalya",
                 role="parent",
                 hashed_password=hash_password("123456"),
@@ -85,34 +89,29 @@ def init():
             )
             db.add(parent_user)
             db.flush()
+
             parent_profile = ParentProfile(
                 user_id=parent_user.id,
                 student_id=student.id,
                 relationship_to_student="Mother",
-                phone="+260971234567",
+                phone=parent_username,
+                # Using hash_password for the PIN as well
                 hashed_pin=hash_password("123456"),
                 approval_status="approved",
             )
             db.add(parent_profile)
-            print("Created test parent — phone: +260971234567 / PIN: 123456")
+            print(f"✅ Created test parent — Phone: {parent_username} / PIN: 123456")
 
+        # Commit all changes to the database
         db.commit()
-        print("\n✅ Database initialized successfully!")
-        print("─" * 40)
-        print("Default credentials:")
-        print("  Admin:   admin / schola2024")
-        print("  Teacher: testteacher / teacher1234")
-        print("  Parent:  +260971234567 / PIN: 123456")
-        print("─" * 40)
-        print("⚠  CHANGE THE ADMIN PASSWORD IMMEDIATELY IN PRODUCTION!")
+        print("\n🚀 SmartSchola Database Initialized Successfully!")
 
     except Exception as e:
         db.rollback()
-        print(f"❌ Error: {e}")
+        print(f"❌ Initialization Error: {e}")
         raise
     finally:
         db.close()
-
 
 if __name__ == "__main__":
     init()
