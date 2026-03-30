@@ -1,7 +1,7 @@
 """
 SmartSchola Database Initialization Script
 Run once: python init_db.py
-Creates all tables and seeds default admin, teacher, and parent accounts.
+Creates all tables and seeds/updates default admin, teacher, and parent accounts.
 """
 from database import engine, SessionLocal
 from models import Base, User, TeacherProfile, ParentProfile, Student, School
@@ -26,21 +26,26 @@ def init():
             db.add(school)
             print("✅ Created demo school profile.")
 
-        # ── 2. Admin User ──────────────────────────────────────────────────
-        if not db.query(User).filter_by(username="admin").first():
+        # ── 2. Admin User (Force Update to SHA-256) ────────────────────────
+        admin = db.query(User).filter_by(username="admin").first()
+        if not admin:
             admin = User(
                 username="admin",
                 full_name="System Administrator",
                 role="admin",
-                # This uses our truncated hash from auth.py
                 hashed_password=hash_password("schola2024"),
                 is_active=True,
             )
             db.add(admin)
-            print("✅ Created admin user — User: admin / Pass: schola2024")
+            print("✅ Created NEW admin user — User: admin / Pass: schola2024")
+        else:
+            # This line fixes your "Login Failed" issue by overwriting old hashes
+            admin.hashed_password = hash_password("schola2024")
+            print("🔄 Updated EXISTING admin to SHA-256 password.")
 
         # ── 3. Test Teacher ────────────────────────────────────────────────
-        if not db.query(User).filter_by(username="testteacher").first():
+        teacher_user = db.query(User).filter_by(username="testteacher").first()
+        if not teacher_user:
             teacher_user = User(
                 username="testteacher",
                 full_name="Mr. T. Phiri",
@@ -49,7 +54,7 @@ def init():
                 is_active=True,
             )
             db.add(teacher_user)
-            db.flush()  # Get ID for profile
+            db.flush() 
 
             profile = TeacherProfile(
                 user_id=teacher_user.id,
@@ -61,6 +66,9 @@ def init():
             )
             db.add(profile)
             print("✅ Created test teacher — User: testteacher / Pass: teacher1234")
+        else:
+            teacher_user.hashed_password = hash_password("teacher1234")
+            print("🔄 Updated EXISTING teacher to SHA-256 password.")
 
         # ── 4. Sample Student (Needed for Parent Link) ─────────────────────
         student = db.query(Student).first()
@@ -79,7 +87,9 @@ def init():
 
         # ── 5. Test Parent ─────────────────────────────────────────────────
         parent_username = "+260971234567"
-        if not db.query(User).filter_by(username=parent_username).first():
+        parent_user = db.query(User).filter_by(username=parent_username).first()
+        
+        if not parent_user:
             parent_user = User(
                 username=parent_username,
                 full_name="Mrs. Bwalya",
@@ -95,16 +105,18 @@ def init():
                 student_id=student.id,
                 relationship_to_student="Mother",
                 phone=parent_username,
-                # Using hash_password for the PIN as well
                 hashed_pin=hash_password("123456"),
                 approval_status="approved",
             )
             db.add(parent_profile)
             print(f"✅ Created test parent — Phone: {parent_username} / PIN: 123456")
+        else:
+            parent_user.hashed_password = hash_password("123456")
+            print("🔄 Updated EXISTING parent to SHA-256 password.")
 
-        # Commit all changes to the database
+        # Final Commit
         db.commit()
-        print("\n🚀 SmartSchola Database Initialized Successfully!")
+        print("\n🚀 SmartSchola Database Initialized & Synchronized!")
 
     except Exception as e:
         db.rollback()
