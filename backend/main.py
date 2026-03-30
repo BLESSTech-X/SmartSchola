@@ -18,16 +18,12 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+# ── CORS FIX (BLESSTech-X Production Update) ──────────────────────────────────
+# We are allowing all origins ("*") temporarily to ensure the Vercel-to-Render 
+# connection is solid. This kills the "Blocked by CORS policy" error.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        FRONTEND_URL,
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://*.vercel.app",
-    ],
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,11 +57,12 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 @app.get("/secret-setup-admin")
 def setup_admin():
     from init_db import init
     try:
-        init() # This runs your script that creates the admin
+        init() # This runs your script that creates/updates the admin
         return {"status": "Success", "message": "Admin user created for SmartSchola!"}
     except Exception as e:
         return {"status": "Error", "detail": str(e)}
