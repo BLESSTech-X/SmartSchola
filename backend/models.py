@@ -6,7 +6,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from database import Base
 
-
+# ── 1. SCHOOL CONFIGURATION ──────────────────────────────────────────────────
 class School(Base):
     __tablename__ = "schools"
 
@@ -16,6 +16,7 @@ class School(Base):
     headmaster = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
+    # Zambian SMS Settings (Africa's Talking)
     sms_provider = Column(String, default="africas_talking")
     sms_api_key = Column(String, nullable=True)
     sms_username = Column(String, nullable=True)
@@ -23,7 +24,7 @@ class School(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-
+# ── 2. USER & SECURITY (The Core Engine) ─────────────────────────────────────
 class User(Base):
     __tablename__ = "users"
 
@@ -32,7 +33,8 @@ class User(Base):
     full_name = Column(String, nullable=False)
     role = Column(String, nullable=False)  # admin, teacher, parent
     hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=False)
+    # Security: Locked by default until BLESSTech-X Admin approval
+    is_active = Column(Boolean, default=False) 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -41,14 +43,14 @@ class User(Base):
     marks_entered = relationship("Mark", back_populates="entered_by_user")
     activity_logs = relationship("ActivityLog", back_populates="user")
 
-
+# ── 3. STAFF & PARENT PROFILES (Approval Logic) ──────────────────────────────
 class TeacherProfile(Base):
     __tablename__ = "teacher_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-    subjects_taught = Column(String, default="")  # comma-separated subject IDs
-    classes_assigned = Column(String, default="")  # comma-separated class names
+    subjects_taught = Column(String, default="")  # comma-separated IDs
+    classes_assigned = Column(String, default="") # e.g., "7A, 8B"
     phone = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
     approval_status = Column(String, default="pending")  # pending, approved, rejected
@@ -56,7 +58,6 @@ class TeacherProfile(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="teacher_profile")
-
 
 class ParentProfile(Base):
     __tablename__ = "parent_profiles"
@@ -67,14 +68,14 @@ class ParentProfile(Base):
     relationship_to_student = Column(String, default="Guardian")
     phone = Column(String, nullable=False)
     hashed_pin = Column(String, nullable=False)
-    approval_status = Column(String, default="pending")  # pending, approved, rejected
+    approval_status = Column(String, default="approved") # Parents usually auto-approve
     rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="parent_profile")
     student = relationship("Student", back_populates="parent_profiles")
 
-
+# ── 4. STUDENT & ACADEMIC DATA ───────────────────────────────────────────────
 class Student(Base):
     __tablename__ = "students"
 
@@ -87,6 +88,8 @@ class Student(Base):
     gender = Column(String, nullable=True)
     parent_phone = Column(String, nullable=True)
     address = Column(Text, nullable=True)
+    # Financial tracking for Zambian Mobile Money
+    balance = Column(Float, default=0.0) 
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -94,7 +97,6 @@ class Student(Base):
     marks = relationship("Mark", back_populates="student")
     fees = relationship("Fee", back_populates="student")
     parent_profiles = relationship("ParentProfile", back_populates="student")
-
 
 class Subject(Base):
     __tablename__ = "subjects"
@@ -107,7 +109,6 @@ class Subject(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     marks = relationship("Mark", back_populates="subject")
-
 
 class Mark(Base):
     __tablename__ = "marks"
@@ -129,7 +130,7 @@ class Mark(Base):
     subject = relationship("Subject", back_populates="marks")
     entered_by_user = relationship("User", back_populates="marks_entered")
 
-
+# ── 5. FINANCE, SMS & LOGS ───────────────────────────────────────────────────
 class Fee(Base):
     __tablename__ = "fees"
 
@@ -140,13 +141,12 @@ class Fee(Base):
     amount_due = Column(Float, nullable=False)
     amount_paid = Column(Float, default=0.0)
     payment_date = Column(String, nullable=True)
-    payment_method = Column(String, nullable=True)  # Cash, MoMo, Bank, Bursary
+    payment_method = Column(String, nullable=True)  # Cash, MoMo, Bank
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     student = relationship("Student", back_populates="fees")
-
 
 class SmsLog(Base):
     __tablename__ = "sms_logs"
@@ -158,7 +158,6 @@ class SmsLog(Base):
     provider = Column(String, nullable=True)
     status = Column(String, default="logged")  # delivered, failed, logged
     sent_at = Column(DateTime, default=datetime.utcnow)
-
 
 class ActivityLog(Base):
     __tablename__ = "activity_logs"
