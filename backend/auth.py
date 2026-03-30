@@ -1,33 +1,33 @@
 import os
+import hashlib
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from database import get_db
 import models
 
 # ── CONFIGURATION ──────────────────────────────────────────────────────────
-# Using a shorter fallback to avoid Bcrypt 72-byte overhead
-SECRET_KEY = os.getenv("SECRET_KEY", "BTX26")
+SECRET_KEY = os.getenv("SECRET_KEY", "SmartSchola_Zambia_2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
-# Single shared CryptContext with explicit truncation error suppression
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
-
 security = HTTPBearer()
 
-# ── HASHING UTILITIES ──────────────────────────────────────────────────────
+# ── NEW STABLE HASHING (No 72-byte limit) ──────────────────────────────────
 def hash_password(password: str) -> str:
-    # We only take the first 50 chars to leave room for the secret key
-    return pwd_context.hash(password[:50])
+    """
+    Uses SHA-256. This is stable and has NO character limits.
+    """
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def check_password(plain: str, hashed: str) -> bool:
-    # Must match the 50 char limit above
-    return pwd_context.verify(plain[:50], hashed)
+    """
+    Compares the SHA-256 hash of the input to the stored hash.
+    """
+    return hashlib.sha256(plain.encode()).hexdigest() == hashed
 
 
 # ── JWT & AUTH ─────────────────────────────────────────────────────────────
@@ -36,7 +36,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode["exp"] = expire
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -59,22 +58,6 @@ def get_current_user(
     if user is None or not user.is_active:
         raise credentials_exception
     return user
-
-
-def get_current_parent(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> models.User:
-    user = get_current_user(credentials, db)
-    if user.role != "parent":
-        raise HTTPException(status_code=403, detail="Parent access only")
-    profile = db.query(models.ParentProfile).filter(
-        models.ParentProfile.user_id == user.id
-    ).first()
-    if not profile or profile.approval_status != "approved":
-        raise HTTPException(status_code=403, detail="Parent account not approved")
-    return user
-
 
 def require_roles(*roles):
     def dependency(
