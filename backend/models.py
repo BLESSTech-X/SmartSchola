@@ -1,7 +1,9 @@
+import uuid
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Boolean, Float, DateTime,
     ForeignKey, Text, JSON
+)
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -42,6 +44,8 @@ class User(Base):
     parent_profile = relationship("ParentProfile", back_populates="user", uselist=False)
     marks_entered = relationship("Mark", back_populates="entered_by_user")
     activity_logs = relationship("ActivityLog", back_populates="user")
+    community_posts = relationship("CommunityPost", back_populates="author")
+    comments = relationship("Comment", back_populates="user")
 
 # ── 3. STAFF & PARENT PROFILES (Approval Logic) ──────────────────────────────
 class TeacherProfile(Base):
@@ -68,7 +72,7 @@ class ParentProfile(Base):
     relationship_to_student = Column(String, default="Guardian")
     phone = Column(String, nullable=False)
     hashed_pin = Column(String, nullable=False)
-    approval_status = Column(String, default="approved") # Parents usually auto-approve
+    approval_status = Column(String, default="approved")
     rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -80,6 +84,11 @@ class Student(Base):
     __tablename__ = "students"
 
     id = Column(Integer, primary_key=True, index=True)
+    # BLESSTech-X: Auto-ID like SS26-A1B2
+    unique_id = Column(String, unique=True, index=True, default=lambda: f"SS26-{uuid.uuid4().hex[:4].upper()}")
+    # BLESSTech-X: Photo Support
+    photo_url = Column(String, nullable=True)
+    
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     grade = Column(Integer, nullable=False)
@@ -88,7 +97,6 @@ class Student(Base):
     gender = Column(String, nullable=True)
     parent_phone = Column(String, nullable=True)
     address = Column(Text, nullable=True)
-    # Financial tracking for Zambian Mobile Money
     balance = Column(Float, default=0.0) 
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -148,6 +156,33 @@ class Fee(Base):
 
     student = relationship("Student", back_populates="fees")
 
+# ── 6. BLESSTech-X COMMUNITY (SCHOOL SQUARE) ────────────────────────────────
+class CommunityPost(Base):
+    __tablename__ = "community_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    image_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    author = relationship("User", back_populates="community_posts")
+    comments = relationship("Comment", back_populates="post")
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("community_posts.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    text = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    post = relationship("CommunityPost", back_populates="comments")
+    user = relationship("User", back_populates="comments")
+
+# ── 7. SYSTEM LOGS ──────────────────────────────────────────────────────────
 class SmsLog(Base):
     __tablename__ = "sms_logs"
 
@@ -156,7 +191,7 @@ class SmsLog(Base):
     recipient_name = Column(String, nullable=True)
     message = Column(Text, nullable=False)
     provider = Column(String, nullable=True)
-    status = Column(String, default="logged")  # delivered, failed, logged
+    status = Column(String, default="logged")
     sent_at = Column(DateTime, default=datetime.utcnow)
 
 class ActivityLog(Base):
