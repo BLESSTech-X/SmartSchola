@@ -291,3 +291,12 @@ class ParentProfileOut(BaseModel):
 class TeacherAssignUpdate(BaseModel):
     classes_assigned: str
     subjects_taught: str
+
+class CommunityPostResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+    image_url: str | None
+    created_at: datetime
+    class Config:
+        from_attributes = True
