@@ -1,82 +1,67 @@
-import os
-import hashlib
-from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from database import get_db
+from datetime import timedelta
+from typing import Any
+
+# ── FLAT IMPORTS ─────────────────────────────────────────────────────────────
+# We no longer use ".." because all files are now in the same backend folder.
 import models
+import schemas
+import auth_utils
+from database import get_db
 
-# ── CONFIGURATION ──────────────────────────────────────────────────────────
-SECRET_KEY = os.getenv("SECRET_KEY", "SmartSchola_Zambia_2026")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"]
+)
 
-security = HTTPBearer()
-
-# ── STABLE HASHING (No 72-byte limit) ──────────────────────────────────────
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def check_password(plain: str, hashed: str) -> bool:
-    return hashlib.sha256(plain.encode()).hexdigest() == hashed
-
-# ── JWT & AUTH ─────────────────────────────────────────────────────────────
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode["exp"] = expire
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> models.User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(models.User).filter(models.User.username == username).first()
-    if user is None or not user.is_active:
-        raise credentials_exception
-    return user
-
-# --- THIS WAS THE MISSING FUNCTION CAUSING THE CRASH ---
-def get_current_parent(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> models.User:
-    user = get_current_user(credentials, db)
-    if user.role != "parent":
-        raise HTTPException(status_code=403, detail="Parent access only")
-    profile = db.query(models.ParentProfile).filter(
-        models.ParentProfile.user_id == user.id
+@router.post("/login", response_model=schemas.Token)
+def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_db)) -> Any:
+    """
+    Authenticates a user and returns a JWT access token.
+    Expects JSON body: {"username": "...", "password": "..."}
+    """
+    # 1. Look for the user in the database
+    user = db.query(models.User).filter(
+        models.User.username == user_credentials.username
     ).first()
-    if not profile or profile.approval_status != "approved":
-        raise HTTPException(status_code=403, detail="Parent account not approved")
-    return user
 
-def require_roles(*roles):
-    def dependency(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db: Session = Depends(get_db)
-    ) -> models.User:
-        user = get_current_user(credentials, db)
-        if user.role not in roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied. Required roles: {', '.join(roles)}"
-            )
-        return user
-    return dependency
+    # 2. Verify user existence and password
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Note: verify_password comes from your auth_utils.py file
+    if not auth_utils.verify_password(user_credentials.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 3. Create the Access Token
+    access_token_expires = timedelta(minutes=auth_utils.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = auth_utils.create_access_token(
+        data={"sub": user.username, "role": user.role},
+        expires_delta=access_token_expires
+    )
+
+    # 4. Return token and user role
+    # Including 'role' allows the frontend to redirect to Admin vs Teacher dashboard
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "role": user.role
+    }
+
+@router.get("/me", response_model=schemas.UserOut)
+def get_current_user_info(
+    current_user: models.User = Depends(auth_utils.get_current_user)
+):
+    """
+    Returns the profile of the currently logged-in user.
+    """
+    return current_user
