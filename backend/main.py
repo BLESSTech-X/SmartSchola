@@ -3,59 +3,43 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-# 1. Load environment variables
 load_dotenv()
 
-# 2. Import local modules 
-# Note: Ensure database.py and routers/auth.py exist in your directory
-from database import engine, Base
-from routers import auth
+# We import directly from the same folder now
+import auth, registration, admin, students, subjects, marks, fees, reports, sms, dashboard, settings, parent_portal
 
-# 3. Create Database Tables (Crucial for first-time Supabase setup)
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"Database connection failed: {e}")
-
-# 4. Initialize the FastAPI app
 app = FastAPI(
     title="Smart Schola API",
-    description="School Management System - Stable Build",
+    description="School Management System - BLESSTech-X Build",
     version="1.0.0",
 )
 
-# 5. Configure CORS
-# We use a mix of fixed URLs and wildcards for maximum compatibility
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://smart-schola.vercel.app")
-
-origins = [
-    FRONTEND_URL,
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
-
+# ── CORS FIX (Ensures Vercel can always talk to Render) ─────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 6. Include Routers
-# Note: Your auth.py already has a prefix="/auth" inside it, 
-# so we don't repeat it here to avoid /auth/auth/login URLs.
+# ── Routers (Updated to use the direct imports) ─────────────────────────────
 app.include_router(auth.router)
+app.include_router(registration.router)
+app.include_router(admin.router)
+app.include_router(students.router)
+app.include_router(subjects.router)
+app.include_router(marks.router)
+app.include_router(fees.router)
+app.include_router(reports.router)
+app.include_router(sms.router)
+app.include_router(dashboard.router)
+app.include_router(settings.router)
+app.include_router(parent_portal.router)
 
-# 7. Basic Routes
 @app.get("/")
 def root():
-    return {
-        "name": "Smart Schola API",
-        "status": "Online",
-        "version": "1.0.0",
-        "database": "Connected"
-    }
+    return {"name": "Smart Schola API", "status": "Online", "version": "1.0.0"}
 
 @app.get("/health")
 def health():
