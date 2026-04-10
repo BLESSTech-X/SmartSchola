@@ -1,7 +1,8 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
 
-# Authentication Schemas
+# --- AUTH SCHEMAS ---
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -10,13 +11,22 @@ class TokenData(BaseModel):
     username: Optional[str] = None
     role: Optional[str] = None
 
-# User Schemas
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
-class UserCreate(BaseModel):
+# --- USER SCHEMAS ---
+class UserBase(BaseModel):
     email: EmailStr
-    password: str
     full_name: str
-    role: str = "student" # Default role
+    role: str = "student"
+
+class UserCreate(UserBase):
+    password: str
+
+class UserOut(UserBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
