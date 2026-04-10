@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-import jose.jwt as jwt
+from jose import jwt
 from passlib.context import CryptContext
 import os
 
-# Absolute imports for the Normal State
+# Absolute imports
 from database import get_db
 import models
+import schemas
 
 router = APIRouter()
 
@@ -18,21 +18,29 @@ ALGORITHM = "HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # 1. Find User
-    user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
+    # 1. Find User by username
+    user = db.query(models.User).filter(models.User.username == request.username).first()
     
-    # 2. Verify Password
-    if not pwd_context.verify(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    # 2. Verify existence and password
+    if not user or not pwd_context.verify(request.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Incorrect username or password"
+        )
     
-    # 3. Create Token
-    access_token = jwt.encode(
-        {"sub": user.username, "role": user.role, "exp": datetime.utcnow() + timedelta(hours=24)},
-        SECRET_KEY, 
-        algorithm=ALGORITHM
-    )
+    # 3. Create JWT Token
+    expire = datetime.utcnow() + timedelta(hours=24)
+    to_encode = {
+        "sub": user.username, 
+        "role": user.role, 
+        "exp": expire
+    }
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     
-    return {"access_token": access_token, "token_type": "bearer", "role": user.role}
+    # 4. Return JSON response the frontend expects
+    return {
+        "access_token": encoded_jwt, 
+        "token_type": "bearer", 
+        "role": user.role
+    }
