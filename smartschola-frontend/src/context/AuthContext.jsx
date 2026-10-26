@@ -8,25 +8,22 @@ export function AuthProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
   })
 
-  // Temporary local-only demo login. No API or database request is made here.
-  const login = useCallback((newToken, user) => {
-    localStorage.setItem('token', newToken)
+  const login = useCallback((accessToken, user) => {
+    localStorage.setItem('token', accessToken)
     localStorage.setItem('user', JSON.stringify(user))
-    localStorage.setItem('smartschola_demo_mode', 'true')
-    setToken(newToken)
+    setToken(accessToken)
     setCurrentUser(user)
   }, [])
 
   const logout = useCallback(() => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    localStorage.removeItem('smartschola_demo_mode')
     setToken(null)
     setCurrentUser(null)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ token, currentUser, isAuthenticated: !!token, isDemoMode: localStorage.getItem('smartschola_demo_mode') === 'true', login, logout }}>
+    <AuthContext.Provider value={{ token, currentUser, isAuthenticated: Boolean(token && currentUser), login, logout }}>
       {children}
     </AuthContext.Provider>
   )
