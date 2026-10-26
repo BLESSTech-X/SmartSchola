@@ -1,17 +1,27 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, GraduationCap, MapPin, Search, ShieldCheck, School, LockKeyhole } from 'lucide-react'
-
-const schools = [
-  { name: 'BrainSmart School', location: 'Lusaka, Zambia', type: 'Primary & Secondary', slug: 'brainsmart-school', initials: 'BS', tone: 'blue', status: 'Profile preview' },
-  { name: 'Greenfield Learning Academy', location: 'School location', type: 'Primary School', slug: 'greenfield-academy', initials: 'GL', tone: 'green', status: 'Profile preview' },
-  { name: 'Horizon Preparatory School', location: 'School location', type: 'Early Learning & Primary', slug: 'horizon-preparatory', initials: 'HP', tone: 'purple', status: 'Profile preview' },
-]
+import client from '../api/client.js'
 
 export default function SchoolSignIn() {
   const [query, setQuery] = useState('')
+  const [schools, setSchools] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const navigate = useNavigate()
-  const filtered = useMemo(() => schools.filter(s => `${s.name} ${s.location} ${s.type}`.toLowerCase().includes(query.toLowerCase())), [query])
+
+  useEffect(() => {
+    let active = true
+    client.get('/schools/public')
+      .then(({ data }) => { if (active) setSchools(Array.isArray(data) ? data : []) })
+      .catch(() => { if (active) setLoadError('We could not load the registered school directory. Please try again shortly; do not choose a different school as a workaround.') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const filtered = useMemo(() => schools.filter(s =>
+    `${s.name} ${s.location || ''}`.toLowerCase().includes(query.toLowerCase())
+  ), [schools, query])
 
   return <main className="school-signin-page">
     <header className="school-signin-topbar">
@@ -22,18 +32,20 @@ export default function SchoolSignIn() {
       <div className="school-signin-heading">
         <span className="public-section-kicker"><ShieldCheck size={15}/> SECURE SCHOOL ACCESS</span>
         <h1>First, choose <span>your school.</span></h1>
-        <p>School access is tied to a specific school. Select the school that issued your credentials before continuing to sign in.</p>
+        <p>Your sign-in is checked against the school you select. Only registered schools and accounts authorised by that school can grant access.</p>
       </div>
       <label className="school-signin-search"><Search size={19}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Find your school by name or location" aria-label="Search schools"/></label>
-      <div className="school-signin-list">
-        {filtered.map(school => <article className="school-signin-card" key={school.slug}>
-          <div className={`school-signin-emblem ${school.tone}`}><School size={26}/><span>{school.initials}</span></div>
-          <div className="school-signin-details"><span className="school-signin-type">{school.type}</span><h2>{school.name}</h2><p><MapPin size={14}/>{school.location}</p><span className="school-signin-preview-tag">{school.status}</span></div>
-          <button type="button" className="school-signin-continue" onClick={() => navigate(`/login?school=${school.slug}`)}>Choose school <ArrowRight size={17}/></button>
+      {loading && <div className="school-signin-empty"><School size={26}/><h2>Loading registered schools…</h2><p>Checking the live school directory.</p></div>}
+      {!loading && loadError && <div className="school-signin-empty" role="alert"><ShieldCheck size={26}/><h2>School directory unavailable</h2><p>{loadError}</p><button type="button" onClick={() => window.location.reload()}>Try again</button></div>}
+      {!loading && !loadError && <div className="school-signin-list">
+        {filtered.map(school => <article className="school-signin-card" key={school.id || school.slug}>
+          <div className="school-signin-emblem blue"><School size={26}/><span>{school.name.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase()}</span></div>
+          <div className="school-signin-details"><span className="school-signin-type">REGISTERED SCHOOL</span><h2>{school.name}</h2><p><MapPin size={14}/>{school.location || 'Location not provided'}</p></div>
+          <button type="button" className="school-signin-continue" onClick={() => navigate(`/login?school=${encodeURIComponent(school.slug)}`)}>Choose school <ArrowRight size={17}/></button>
         </article>)}
-        {filtered.length === 0 && <div className="school-signin-empty"><Search size={26}/><h2>No matching school found</h2><p>Check the spelling or ask your school administrator to confirm the school name.</p><button type="button" onClick={() => setQuery('')}>Clear search</button></div>}
-      </div>
-      <div className="school-signin-safety"><LockKeyhole size={18}/><p><strong>Important:</strong> only choose the school that issued your login details. If your school is not listed, do not sign in through another school.</p></div>
+        {filtered.length === 0 && <div className="school-signin-empty"><Search size={26}/><h2>{schools.length ? 'No matching school found' : 'No registered schools are available yet'}</h2><p>{schools.length ? 'Check the spelling or ask your school administrator to confirm the registered school name.' : 'School sign-in will appear here when schools are registered and activated. Do not use a sample profile to sign in.'}</p>{query && <button type="button" onClick={() => setQuery('')}>Clear search</button>}</div>}
+      </div>}
+      <div className="school-signin-safety"><LockKeyhole size={18}/><p><strong>Security notice:</strong> choose only the school that issued your credentials. Three failed sign-in attempts flag that school-specific sign-in for support verification. Support must confirm your details with the headmaster before restoring access.</p></div>
       <div className="school-signin-register">Is your school not on SmartSchola yet? <Link to="/#for-schools">School headmasters can start registration <ArrowRight size={14}/></Link></div>
     </section>
     <footer className="school-signin-footer">© {new Date().getFullYear()} SmartSchola · Schools. Families. Futures.</footer>
