@@ -1,4 +1,4 @@
-"""Fast contract tests for SmartSchola authentication schemas."""
+"""Fast contract tests for school-scoped SmartSchola authentication schemas."""
 import sys
 from pathlib import Path
 
@@ -11,14 +11,31 @@ sys.path.insert(0, str(BACKEND))
 import schemas  # noqa: E402
 
 
-def test_login_accepts_email_in_existing_username_field():
-    login = schemas.UserLogin(username="teacher@example.com", password="not-a-real-password")
-    assert str(login.username) == "teacher@example.com"
+def test_login_accepts_email_and_requires_selected_school_and_role():
+    login = schemas.UserLogin(
+        username="teacher@example.com",
+        password="not-a-real-password",
+        school_slug="registered-school",
+        role="teacher",
+    )
+    assert login.username == "teacher@example.com"
+    assert login.school_slug == "registered-school"
+    assert login.role == "teacher"
 
 
-def test_login_rejects_non_email_username():
+def test_login_accepts_school_issued_identifier():
+    login = schemas.UserLogin(
+        username="STU-1042",
+        password="not-a-real-password",
+        school_slug="registered-school",
+        role="student",
+    )
+    assert login.username == "STU-1042"
+
+
+def test_login_requires_school_and_role():
     with pytest.raises(ValidationError):
-        schemas.UserLogin(username="teacher", password="some-password")
+        schemas.UserLogin(username="teacher@example.com", password="not-a-real-password")
 
 
 def test_user_creation_rejects_short_password():
