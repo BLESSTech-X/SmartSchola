@@ -115,3 +115,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+@media (max-width: 767px) {
+  .smart-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .smart-modal { width: 100% !important; max-width: none !important; max-height: 91dvh !important; border-radius: 22px 22px 0 0 !important; padding-bottom: env(safe-area-inset-bottom); }
+  .smart-modal > div:first-child { padding: 16px 18px !important; }
+  .smart-modal > div:nth-child(2) { padding: 17px 18px !important; }
+  .smart-modal .grid.grid-cols-2 { grid-template-columns: minmax(0, 1fr) !important; }
+  .smart-modal .col-span-2 { grid-column: auto !important; }
+  .page-content .flex.items-center.justify-between.mb-6 { flex-wrap: wrap; gap: 12px; }
+  .page-content .flex.items-center.justify-between.mb-6 > :last-child { max-width: 100%; }
+  .page-content .flex.items-center.justify-between.mb-6 > :last-child button { white-space: nowrap; }
+}
