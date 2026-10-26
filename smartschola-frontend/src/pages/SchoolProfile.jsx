@@ -60,7 +60,7 @@ export default function SchoolProfile() {
   const [galleryFilter, setGalleryFilter] = useState('All')
   const [activeImage, setActiveImage] = useState(null)
 
-  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) }, [slug])
+  useEffect(() => { window.scrollTo(0, 0) }, [slug])
 
   if (!school) return <main className="school-profile-not-found"><GraduationCap size={42}/><h1>School profile not found</h1><p>This profile may not be published yet.</p><Link to="/" className="public-button primary">Back to SmartSchola <ArrowRight size={17}/></Link></main>
 
