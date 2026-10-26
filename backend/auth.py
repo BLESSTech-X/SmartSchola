@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 import auth_utils
@@ -73,18 +74,19 @@ def login(
             detail="This sign-in has been temporarily flagged after three failed attempts. Contact SmartSchola support. Access is restored only after support verifies your identity with the school's headmaster.",
         )
 
-    user = db.query(models.User).filter(models.User.email == identity).first()
-    membership = None
-    if user is not None:
-        membership = db.query(models.SchoolMembership).filter_by(
-            school_id=school.id,
-            user_id=user.id,
-            is_authorized=True,
-        ).first()
+    membership = db.query(models.SchoolMembership).filter(
+        models.SchoolMembership.school_id == school.id,
+        models.SchoolMembership.is_authorized.is_(True),
+        or_(
+            func.lower(models.SchoolMembership.login_identifier) == identity,
+            func.lower(models.User.email) == identity,
+        ),
+    ).join(models.User, models.User.id == models.SchoolMembership.user_id).first()
+    user = db.query(models.User).filter(models.User.id == membership.user_id).first() if membership else None
 
     role = user_credentials.role.strip().lower()
     valid_role = membership is not None and membership.role.lower() == role
-    valid_password = user is not None and auth_utils.verify_password(
+    valid_password = user is not None and user.is_active and auth_utils.verify_password(
         user_credentials.password, user.hashed_password
     )
     if not user or not user.is_active or not valid_role or not valid_password:
