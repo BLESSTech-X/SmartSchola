@@ -15,13 +15,11 @@ function ProtectedLayout() {
   const { isAuthenticated } = useAuth()
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="app-shell">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs sm:text-sm text-amber-900">
-          <strong>DEMO MODE:</strong> Use fictional test information only. Login is hard-coded; connected modules may still require their configured backend.
-        </div>
-        <div className="page-enter">
+      <main className="app-main">
+        <div className="demo-banner"><strong>DEMO MODE</strong><span>Use fictional test information only. Connected modules may require a configured backend.</span></div>
+        <div className="page-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/students" element={<Students />} />
