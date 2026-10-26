@@ -30,11 +30,12 @@ export default function Landing() {
         </Link>
         <button className="public-menu-toggle" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(v => !v)}>{menuOpen ? <X/> : <Menu/>}</button>
         <nav className={menuOpen ? 'public-nav-links open' : 'public-nav-links'}>
-          <a href="#discover" onClick={() => setMenuOpen(false)}>Explore schools</a>
-          <a href="#platform" onClick={() => setMenuOpen(false)}>Platform</a>
-          <a href="#for-schools" onClick={() => setMenuOpen(false)}>For schools</a>
-          <Link to="/login" className="public-login-link" onClick={() => setMenuOpen(false)}><LockKeyhole size={16}/> School sign in</Link>
-          <a href="#for-schools" className="public-join-button" onClick={() => setMenuOpen(false)}>Join SmartSchola <ArrowRight size={16}/></a>
+          <a href="#discover" onClick={() => setMenuOpen(false)}>Find a school</a>
+          <a href="#platform" onClick={() => setMenuOpen(false)}>How it works</a>
+          <a href="#benefits" onClick={() => setMenuOpen(false)}>Platform features</a>
+          <a href="#for-schools" onClick={() => setMenuOpen(false)}>For school leaders</a>
+          <Link to="/login" className="public-login-link" onClick={() => setMenuOpen(false)}><LockKeyhole size={16}/> Sign in</Link>
+          <a href="#for-schools" className="public-join-button" onClick={() => setMenuOpen(false)}>Register your school <ArrowRight size={17}/></a>
         </nav>
       </header>
 
@@ -46,20 +47,16 @@ export default function Landing() {
             <h1>Where every school<br/><span>has a place to shine.</span></h1>
             <p className="public-hero-copy">Discover schools, celebrate learning, and bring school life together. SmartSchola connects each school's public presence with the tools its people need behind the scenes.</p>
             <div className="public-hero-actions">
-              <a href="#discover" className="public-button primary">Discover schools <ArrowRight size={18}/></a>
-              <a href="#for-schools" className="public-button secondary">Bring your school <ChevronRight size={18}/></a>
+              <a href="#discover" className="public-button primary">Explore schools <ArrowRight size={18}/></a>
+              <a href="#for-schools" className="public-button secondary">Register your school <ChevronRight size={18}/></a>
             </div>
             <div className="public-trust-row"><span><CheckCircle2 size={16}/> Built for schools</span><span><ShieldCheck size={16}/> Privacy-first approach</span><span><Users size={16}/> Families included</span></div>
           </div>
-          <div className="public-hero-visual" aria-label="Illustration of a connected school community">
-            <div className="hero-window">
-              <div className="hero-window-top"><span/><span/><span/><small>YOUR SCHOOL, YOUR SPACE</small></div>
-              <div className="hero-school-banner"><div className="hero-school-emblem"><GraduationCap size={29}/></div><div><strong>Your School Name</strong><small>A community that grows together</small></div><span className="hero-verified"><ShieldCheck size={15}/> School profile</span></div>
-              <div className="hero-window-grid"><div className="hero-mini-card hero-mini-feature"><div className="mini-image"><BookOpen size={28}/></div><small>ACADEMICS</small><strong>Learning with purpose</strong><span>Classes, subjects & progress</span></div><div className="hero-mini-card"><span className="mini-card-icon gold"><CalendarDays size={19}/></span><strong>School calendar</strong><small>Events & key dates</small><div className="mini-lines"><i/><i/><i/></div></div><div className="hero-mini-card"><span className="mini-card-icon green"><Users size={19}/></span><strong>Our community</strong><small>Families stay connected</small><div className="mini-avatars"><i>J</i><i>M</i><i>A</i><b>+</b></div></div></div>
-              <div className="hero-window-footer"><span className="hero-live-dot"/> One school. One connected community.</div>
-            </div>
-            <div className="hero-floating-note"><span className="floating-note-icon"><HeartHandshake size={20}/></span><div><strong>Parents in the loop</strong><small>Progress, notices and reports</small></div></div>
-            <div className="hero-floating-badge"><ShieldCheck size={16}/> Role-based access</div>
+          <div className="public-hero-visual public-hero-photo-showcase" aria-label="Illustrative school life photo showcase">
+            <div className="showcase-photo showcase-photo-main"><img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1100&q=85" alt="Students learning together in a bright classroom" loading="eager"/><div className="showcase-photo-caption"><span>LEARNING TOGETHER</span><strong>Every learner has a future.</strong></div></div>
+            <div className="showcase-photo showcase-photo-top"><img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=650&q=85" alt="Teacher supporting students in class" loading="eager"/><span className="showcase-floating-label"><BookOpen size={15}/> Learning & growth</span></div>
+            <div className="showcase-photo showcase-photo-bottom"><img src="https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=650&q=85" alt="School children learning and working together" loading="eager"/><span className="showcase-floating-label"><Users size={15}/> Stronger communities</span></div>
+            <div className="showcase-trust-chip"><ShieldCheck size={18}/><span><strong>One connected school</strong><small>People, progress and possibility</small></span></div>
           </div>
         </section>
 
@@ -81,10 +78,10 @@ export default function Landing() {
           <div className="capability-grid">{capabilities.map(({icon: Icon,title,text,tone}) => <article className="capability-card" key={title}><span className={`capability-icon ${tone}`}><Icon size={22}/></span><h3>{title}</h3><p>{text}</p></article>)}</div>
         </section>
 
-        <section className="public-school-cta" id="for-schools"><div className="cta-decoration cta-decoration-one"/><div className="cta-decoration cta-decoration-two"/><div className="school-cta-content"><span className="public-section-kicker">FOR SCHOOL LEADERS</span><h2>Give your school a home<br/>on SmartSchola.</h2><p>Build your school's digital presence and prepare to connect your team, learners and families in one place.</p><div className="cta-actions"><a className="public-button cta-primary" href="#discover">Explore profile previews <ArrowRight size={18}/></a><Link className="public-button cta-secondary" to="/login">School sign in</Link></div><small>School account registration and subscription activation will be introduced through the onboarding workflow.</small></div><div className="cta-side-card"><span className="cta-side-icon"><GraduationCap size={26}/></span><strong>Your school, recognised.</strong><p>A branded public profile, school announcements, events and a connected school workspace.</p><div><CheckCircle2 size={16}/> One school identity</div><div><CheckCircle2 size={16}/> One connected workspace</div><div><CheckCircle2 size={16}/> Different access for each role</div></div></section>
+        <section className="public-school-cta" id="for-schools"><div className="cta-decoration cta-decoration-one"/><div className="cta-decoration cta-decoration-two"/><div className="school-cta-content"><span className="public-section-kicker">FOR SCHOOL LEADERS</span><h2>Give your school a home<br/>on SmartSchola.</h2><p>Build your school's digital presence and prepare to connect your team, learners and families in one place.</p><div className="cta-actions"><a className="public-button cta-primary" href="mailto:singbless89@gmail.com?subject=SmartSchola%20School%20Registration%20Enquiry">Register your school <ArrowRight size={18}/></a><Link className="public-button cta-secondary" to="/login">School sign in</Link></div><small>Start your school registration enquiry. The SmartSchola team will guide you through verification and onboarding.</small></div><div className="cta-side-card"><span className="cta-side-icon"><GraduationCap size={26}/></span><strong>Your school, recognised.</strong><p>A branded public profile, school announcements, events and a connected school workspace.</p><div><CheckCircle2 size={16}/> One school identity</div><div><CheckCircle2 size={16}/> One connected workspace</div><div><CheckCircle2 size={16}/> Different access for each role</div></div></section>
       </main>
 
-      <footer className="public-footer"><Link to="/" className="public-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><span><strong>SmartSchola</strong><small>Schools. Families. Futures.</small></span></Link><p>Connecting schools, learners and families.</p><div><a href="#platform">About SmartSchola</a><a href="#for-schools">For schools</a><Link to="/login">School sign in</Link></div><small>© {new Date().getFullYear()} SmartSchola · Built for a connected school community.</small></footer>
+      <footer className="public-footer"><Link to="/" className="public-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><span><strong>SmartSchola</strong><small>Schools. Families. Futures.</small></span></Link><p>Connecting schools, learners and families.</p><div><a href="#platform">About SmartSchola</a><a href="#discover">School directory</a><a href="#for-schools">Register a school</a><Link to="/login">Sign in by role</Link></div><small>© {new Date().getFullYear()} SmartSchola · Built for a connected school community.</small></footer>
     </div>
   )
 }
