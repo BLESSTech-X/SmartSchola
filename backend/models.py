@@ -31,12 +31,13 @@ class School(Base):
 class SchoolMembership(Base):
     """Explicit permission to enter one school; never trust the role selected in the browser."""
     __tablename__ = "school_memberships"
-    __table_args__ = (UniqueConstraint("school_id", "user_id", name="uq_school_membership"),)
+    __table_args__ = (UniqueConstraint("school_id", "user_id", name="uq_school_membership"), UniqueConstraint("school_id", "login_identifier", name="uq_school_login_identifier"),)
 
     id = Column(Integer, primary_key=True, index=True)
     school_id = Column(Integer, ForeignKey("schools.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     role = Column(String(30), nullable=False)
+    login_identifier = Column(String(160), nullable=True)
     is_authorized = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
