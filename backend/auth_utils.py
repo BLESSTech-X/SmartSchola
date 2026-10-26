@@ -72,4 +72,30 @@ def get_current_user(
     user = db.query(models.User).filter(models.User.email == subject).first()
     if user is None or not user.is_active:
         raise credentials_exception
+
+    # Every authenticated session must remain bound to an active, explicitly authorised school.
+    # Legacy tokens without school claims are intentionally rejected.
+    school_id = payload.get("school_id")
+    school_slug = payload.get("school_slug")
+    token_role = payload.get("role")
+    if not isinstance(school_id, int) or not isinstance(school_slug, str) or not school_slug:
+        raise credentials_exception
+    school = db.query(models.School).filter(
+        models.School.id == school_id,
+        models.School.slug == school_slug,
+        models.School.is_active.is_(True),
+    ).first()
+    membership = db.query(models.SchoolMembership).filter_by(
+        school_id=school_id,
+        user_id=user.id,
+        is_authorized=True,
+    ).first()
+    if school is None or membership is None or membership.role.lower() != str(token_role or "").lower():
+        raise credentials_exception
+
+    # Attach verified tenant context for route-level authorization and response schemas.
+    user.school_id = school.id
+    user.school_slug = school.slug
+    user.school_name = school.name
+    user.role = membership.role
     return user
