@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar.jsx'
 import Landing from './pages/Landing.jsx'
 import SchoolProfile from './pages/SchoolProfile.jsx'
 import Login from './pages/Login.jsx'
+import SchoolSignIn from './pages/SchoolSignIn.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Students from './pages/Students.jsx'
 import MarkEntry from './pages/MarkEntry.jsx'
@@ -49,6 +50,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/s/:slug" element={<SchoolProfile />} />
+            <Route path="/school-sign-in" element={<SchoolSignIn />} />
             <Route path="/login" element={<Login />} />
             <Route path="/workspace/*" element={<ProtectedLayout />} />
             <Route path="*" element={<Navigate to="/" replace />} />
