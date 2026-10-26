@@ -36,6 +36,9 @@ class UserCreate(UserBase):
 class UserOut(UserBase):
     id: int
     created_at: datetime
+    school_id: Optional[int] = None
+    school_slug: Optional[str] = None
+    school_name: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
