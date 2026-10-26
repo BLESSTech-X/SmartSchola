@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import Sidebar from './components/Sidebar.jsx'
+import Landing from './pages/Landing.jsx'
+import SchoolProfile from './pages/SchoolProfile.jsx'
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Students from './pages/Students.jsx'
@@ -18,7 +20,6 @@ function ProtectedLayout() {
     <div className="app-shell">
       <Sidebar />
       <main className="app-main">
-        <div className="demo-banner"><strong>DEMO MODE</strong><span>Use fictional test information only. Connected modules may require a configured backend.</span></div>
         <div className="page-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -42,8 +43,11 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/s/:slug" element={<SchoolProfile />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/*" element={<ProtectedLayout />} />
+            <Route path="/workspace/*" element={<ProtectedLayout />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ToastProvider>
       </AuthProvider>
