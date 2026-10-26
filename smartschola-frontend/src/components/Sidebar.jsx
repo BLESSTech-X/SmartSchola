@@ -60,7 +60,7 @@ export default function Sidebar() {
         )}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {links.map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} end={to === '/'} className={navLinkClass}
+            <NavLink key={to} to={to} end={to === '/workspace'} className={navLinkClass}
               style={({ isActive }) => isActive ? { background: '#F5A623', color: '#0B1D3A' } : {}}>
               <Icon size={18} />{label}
             </NavLink>
