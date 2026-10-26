@@ -24,10 +24,10 @@ export default function Dashboard() {
   }, [])
 
   const quickActions = [
-    { label: 'Add student', detail: 'Create a student profile', icon: Plus, path: '/students', tone: 'navy' },
-    { label: 'Enter marks', detail: 'Update assessment scores', icon: ClipboardList, path: '/marks', tone: 'green' },
-    { label: 'Record payment', detail: 'Track school fees', icon: Wallet, path: '/fees', tone: 'blue' },
-    { label: 'Send SMS', detail: 'Contact parents', icon: MessageSquare, path: '/sms', tone: 'purple' },
+    { label: 'Add student', detail: 'Create a student profile', icon: Plus, path: '/workspace/students', tone: 'navy' },
+    { label: 'Enter marks', detail: 'Update assessment scores', icon: ClipboardList, path: '/workspace/marks', tone: 'green' },
+    { label: 'Record payment', detail: 'Track school fees', icon: Wallet, path: '/workspace/fees', tone: 'blue' },
+    { label: 'Send SMS', detail: 'Contact parents', icon: MessageSquare, path: '/workspace/sms', tone: 'purple' },
   ]
 
   return (
@@ -86,7 +86,6 @@ export default function Dashboard() {
           )}
         </section>
       </div>
-      <div className="dashboard-footnote"><span>DEMO ENVIRONMENT</span> Use fictional school data only. Live records require a configured backend.</div>
     </div>
   )
 }
