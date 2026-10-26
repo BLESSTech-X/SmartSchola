@@ -6,15 +6,20 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
-import auth, registration, admin, students, subjects, marks, fees, reports, sms, dashboard, settings, parent_portal
+import auth, registration, admin, students, subjects, marks, fees, reports, sms, dashboard, settings, parent_portal, schools
+from database import Base, engine
+import models  # noqa: F401 - register SQLAlchemy models before create_all
 
 app = FastAPI(
     title="SmartSchola API",
     description="School Management System - BLESSTech-X Build",
-    version="1.1.0",
+    version="1.2.0",
 )
 
-# Set ALLOWED_ORIGINS to comma-separated exact frontend origins in each environment.
+# Create new control-plane tables on startup. Existing tables are not altered by create_all;
+# deployments changing existing columns must use a reviewed migration.
+Base.metadata.create_all(bind=engine)
+
 _default_origins = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
 ALLOWED_ORIGINS = [
     origin.strip().rstrip("/")
@@ -44,6 +49,7 @@ app.include_router(sms.router)
 app.include_router(dashboard.router)
 app.include_router(settings.router)
 app.include_router(parent_portal.router)
+app.include_router(schools.router)
 
 
 @app.get("/")
