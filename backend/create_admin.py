@@ -1,57 +1,59 @@
-import bcrypt
-# Fix for passlib/bcrypt version conflict
-if not hasattr(bcrypt, "__about__"):
-    bcrypt.__about__ = type('about', (object,), {'__version__': bcrypt.__version__})
+"""Provision an initial administrator without embedding credentials in source.
+
+Run from the backend directory after configuring DATABASE_URL, ADMIN_EMAIL,
+ADMIN_FULL_NAME, and ADMIN_INITIAL_PASSWORD in a private environment.
+"""
+import os
+import sys
 
 from sqlalchemy.orm import sessionmaker
-from passlib.context import CryptContext
-from database import engine
+
+import auth_utils
 import models
+from database import engine
 
-# Setup password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def create_admin():
-    # Initialize Database Session
-    Session = sessionmaker(bind=engine)
-    db = Session()
+def create_admin() -> int:
+    email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    full_name = os.getenv("ADMIN_FULL_NAME", "").strip()
+    password = os.getenv("ADMIN_INITIAL_PASSWORD", "")
 
-    # YOUR CREDENTIALS - You can change these
-    username = "admin"
-    password = "password123" 
-    email = "admin@blesstechx.com"
-
-    try:
-        # 1. Check if user already exists
-        existing = db.query(models.User).filter(models.User.username == username).first()
-        if existing:
-            print(f"⚠️ User '{username}' already exists in Supabase.")
-            return
-
-        # 2. Hash the password
-        hashed_password = pwd_context.hash(password)
-
-        # 3. Create the User object
-        new_user = models.User(
-            username=username,
-            email=email,
-            hashed_password=hashed_password,
-            full_name="BlesstechX Admin",
-            role="admin",
-            is_active=True
+    if not email or not full_name or not password:
+        print(
+            "Missing required environment variables: ADMIN_EMAIL, "
+            "ADMIN_FULL_NAME, ADMIN_INITIAL_PASSWORD.",
+            file=sys.stderr,
         )
+        return 2
+    if len(password) < 12:
+        print("ADMIN_INITIAL_PASSWORD must contain at least 12 characters.", file=sys.stderr)
+        return 2
 
-        # 4. Save to Supabase
-        db.add(new_user)
+    db = sessionmaker(bind=engine)()
+    try:
+        existing = db.query(models.User).filter(models.User.email == email).first()
+        if existing:
+            print("An account with ADMIN_EMAIL already exists; no changes made.")
+            return 1
+
+        user = models.User(
+            email=email,
+            hashed_password=auth_utils.get_password_hash(password),
+            full_name=full_name,
+            role="admin",
+            is_active=True,
+        )
+        db.add(user)
         db.commit()
-        print(f"✅ Success! Admin account created.")
-        print(f"Try logging in with: {username} / {password}")
-
-    except Exception as e:
+        print(f"Administrator account created for {email}. Do not share its password.")
+        return 0
+    except Exception as exc:
         db.rollback()
-        print(f"❌ Error: {e}")
+        print(f"Administrator provisioning failed: {type(exc).__name__}", file=sys.stderr)
+        return 1
     finally:
         db.close()
 
+
 if __name__ == "__main__":
-    create_admin()
+    raise SystemExit(create_admin())
