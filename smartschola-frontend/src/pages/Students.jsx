@@ -105,7 +105,25 @@ export default function Students() {
         ) : students.length === 0 ? (
           <EmptyState icon={Users} title="No students yet" description="Add your first student to get started." actionLabel="Add Student" onAction={openAdd} />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="mobile-student-list">
+            {students.map(s => (
+              <article className="mobile-student-card" key={s.id}>
+                <div className="mobile-student-card-head">
+                  <span className="mobile-student-avatar">{s.first_name?.[0]}{s.last_name?.[0]}</span>
+                  <div className="mobile-student-card-name"><strong>{s.first_name} {s.last_name}</strong><span>Grade {s.grade} · Class {s.class_name}</span></div>
+                </div>
+                <div className="mobile-student-details">
+                  <div><small>Parent phone</small><span>{s.parent_phone || "Not provided"}</span></div>
+                  <div><small>Gender</small><span>{s.gender || "—"}</span></div>
+                </div>
+                <div className="mobile-student-actions">
+                  <button onClick={() => openEdit(s)}><Pencil size={15}/> Edit details</button>
+                  <button className="danger" onClick={() => setDeleteModal(s)}><Trash2 size={15}/> Remove</button>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="overflow-x-auto desktop-student-table">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
