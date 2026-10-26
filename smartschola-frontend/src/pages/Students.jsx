@@ -105,6 +105,7 @@ export default function Students() {
         ) : students.length === 0 ? (
           <EmptyState icon={Users} title="No students yet" description="Add your first student to get started." actionLabel="Add Student" onAction={openAdd} />
         ) : (
+          <>
           <div className="mobile-student-list">
             {students.map(s => (
               <article className="mobile-student-card" key={s.id}>
@@ -178,6 +179,7 @@ export default function Students() {
               </div>
             )}
           </div>
+          </>
         )}
       </div>
 
