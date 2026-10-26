@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Wallet, AlertCircle, MessageSquare, Plus, ClipboardList, LayoutDashboard } from 'lucide-react'
+import { Users, Wallet, AlertCircle, MessageSquare, Plus, ClipboardList, LayoutDashboard, ArrowUpRight, CalendarDays, Sparkles, ChevronRight } from 'lucide-react'
 import StatCard from '../components/StatCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import PageHeader from '../components/PageHeader.jsx'
@@ -24,65 +24,69 @@ export default function Dashboard() {
   }, [])
 
   const quickActions = [
-    { label: 'Add Student', icon: Plus, path: '/students', color: '#0B1D3A' },
-    { label: 'Enter Marks', icon: ClipboardList, path: '/marks', color: '#059669' },
-    { label: 'Record Payment', icon: Wallet, path: '/fees', color: '#0284C7' },
-    { label: 'Send SMS', icon: MessageSquare, path: '/sms', color: '#7C3AED' },
+    { label: 'Add student', detail: 'Create a student profile', icon: Plus, path: '/students', tone: 'navy' },
+    { label: 'Enter marks', detail: 'Update assessment scores', icon: ClipboardList, path: '/marks', tone: 'green' },
+    { label: 'Record payment', detail: 'Track school fees', icon: Wallet, path: '/fees', tone: 'blue' },
+    { label: 'Send SMS', detail: 'Contact parents', icon: MessageSquare, path: '/sms', tone: 'purple' },
   ]
 
   return (
-    <div className="p-6">
-      <PageHeader title="Dashboard" subtitle="Welcome to Smart Schola" />
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard loading={loading} icon={Users} label="Total Students" value={stats?.total_students ?? '—'} sub="Active enrolled" color="#0B1D3A" />
-        <StatCard loading={loading} icon={Wallet} label="Fees Collected" value={loading ? '—' : formatK(stats?.fees_collected)} sub="This year" color="#059669" />
-        <StatCard loading={loading} icon={AlertCircle} label="Outstanding Fees" value={loading ? '—' : formatK(stats?.fees_outstanding)} sub="Balance due" color="#DC2626" />
-        <StatCard loading={loading} icon={MessageSquare} label="SMS Sent Today" value={stats?.sms_sent_today ?? '—'} sub="Messages" color="#7C3AED" />
+    <div className="dashboard-page">
+      <div className="dashboard-welcome">
+        <div>
+          <div className="eyebrow"><Sparkles size={13}/> SCHOOL OVERVIEW</div>
+          <h1>Good to see you.</h1>
+          <p>Here’s what’s happening with your school today.</p>
+        </div>
+        <div className="dashboard-date"><CalendarDays size={16}/><span>{new Date().toLocaleDateString('en-ZM',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span></div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Quick Actions */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h2 className="font-display font-semibold text-base mb-4" style={{ color: '#0B1D3A' }}>Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {quickActions.map(({ label, icon: Icon, path, color }) => (
-              <button
-                key={label}
-                onClick={() => navigate(path)}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all text-center"
-              >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${color}15` }}>
-                  <Icon size={18} style={{ color }} />
-                </div>
-                <span className="text-xs font-medium text-gray-600">{label}</span>
+      <div className="dashboard-stat-grid">
+        <StatCard loading={loading} icon={Users} label="Total students" value={stats?.total_students ?? '—'} sub="Currently enrolled" color="#214A82" />
+        <StatCard loading={loading} icon={Wallet} label="Fees collected" value={loading ? '—' : formatK(stats?.fees_collected)} sub="This academic year" color="#16866B" />
+        <StatCard loading={loading} icon={AlertCircle} label="Outstanding fees" value={loading ? '—' : formatK(stats?.fees_outstanding)} sub="Balance to follow up" color="#C65B42" />
+        <StatCard loading={loading} icon={MessageSquare} label="SMS sent today" value={stats?.sms_sent_today ?? '—'} sub="Messages sent" color="#7655B5" />
+      </div>
+
+      <div className="dashboard-content-grid">
+        <section className="dashboard-panel quick-panel">
+          <div className="section-heading">
+            <div><h2>Quick actions</h2><p>Common tasks, one tap away</p></div>
+          </div>
+          <div className="quick-action-list">
+            {quickActions.map(({ label, detail, icon: Icon, path, tone }) => (
+              <button key={label} className="quick-action" onClick={() => navigate(path)}>
+                <span className={`quick-action-icon ${tone}`}><Icon size={19}/></span>
+                <span className="quick-action-copy"><strong>{label}</strong><small>{detail}</small></span>
+                <ChevronRight className="quick-action-arrow" size={17}/>
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h2 className="font-display font-semibold text-base mb-4" style={{ color: '#0B1D3A' }}>Recent Activity</h2>
+        <section className="dashboard-panel activity-panel">
+          <div className="section-heading">
+            <div><h2>Recent activity</h2><p>A snapshot of recent system activity</p></div>
+            <span className="live-indicator"><span/> Latest</span>
+          </div>
           {!loading && (!stats?.recent_activity || stats.recent_activity.length === 0) ? (
-            <EmptyState icon={LayoutDashboard} title="No activity yet" description="Actions will appear here as you use the system." />
+            <EmptyState icon={LayoutDashboard} title="No activity yet" description="Activity will appear here as you use the system." />
+          ) : loading ? (
+            <div className="activity-loading"><span/><span/><span/></div>
           ) : (
-            <div className="space-y-2">
+            <div className="activity-list">
               {(stats?.recent_activity || []).map(item => (
-                <div key={item.id} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
-                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ background: '#F5A623' }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-700">{item.action}</p>
-                    {item.details && <p className="text-xs text-gray-400">{item.details}</p>}
-                  </div>
-                  <span className="text-xs text-gray-300 flex-shrink-0">{formatDate(item.created_at)}</span>
+                <div key={item.id} className="activity-item">
+                  <span className="activity-dot"/>
+                  <div className="activity-copy"><p>{item.action}</p>{item.details && <small>{item.details}</small>}</div>
+                  <time>{formatDate(item.created_at)}</time>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
+      <div className="dashboard-footnote"><span>DEMO ENVIRONMENT</span> Use fictional school data only. Live records require a configured backend.</div>
     </div>
   )
 }
