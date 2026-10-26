@@ -61,7 +61,7 @@ export default function Login() {
             <button className="login-submit" type="submit" disabled={loading}>{loading ? 'Signing in…' : <><LockKeyhole size={17}/> Sign in securely</>}</button>
           </form>
           <div className="login-security-note"><ShieldCheck size={17}/><span>Use only the account issued to you by your school. SmartSchola will never ask you to share your password with another person.</span></div>
-          <p className="login-help">Need access? <a href="mailto:hello@smartschola.com?subject=School%20portal%20access">Contact your school administrator</a>.</p>
+          <p className="login-help">Need access? Ask your school administrator to issue or reset your account.</p>
         </div>
       </main>
     </div>
