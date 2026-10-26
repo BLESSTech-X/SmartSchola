@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import Sidebar from './components/Sidebar.jsx'
@@ -14,12 +14,16 @@ import SMS from './pages/SMS.jsx'
 import Settings from './pages/Settings.jsx'
 
 function ProtectedLayout() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, currentUser } = useAuth()
+  const location = useLocation()
+  const routeNames = { '/workspace': 'School overview', '/workspace/students': 'Students & learners', '/workspace/marks': 'Mark entry', '/workspace/results': 'Academic results', '/workspace/fees': 'Fee tracker', '/workspace/sms': 'School communications', '/workspace/settings': 'Workspace settings' }
+  const pageTitle = routeNames[location.pathname] || 'School workspace'
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return (
     <div className="app-shell">
       <Sidebar />
       <main className="app-main">
+        <header className="workspace-topbar"><div><span className="workspace-topbar-kicker">SMARTSCHOLA WORKSPACE</span><h1>{pageTitle}</h1></div><div className="workspace-topbar-actions"><span className="workspace-user-chip"><span>{(currentUser?.full_name || currentUser?.name || 'U').slice(0,1).toUpperCase()}</span><strong>{currentUser?.full_name || currentUser?.name || 'School user'}</strong><small>{currentUser?.role || 'Authorised user'}</small></span><Link to="/" className="workspace-home-link">Public site ↗</Link></div></header>
         <div className="page-content">
           <Routes>
             <Route index element={<Dashboard />} />
