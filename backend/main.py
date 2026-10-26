@@ -1,29 +1,37 @@
 import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 load_dotenv()
 
-# We import directly from the same folder now
 import auth, registration, admin, students, subjects, marks, fees, reports, sms, dashboard, settings, parent_portal
 
 app = FastAPI(
-    title="Smart Schola API",
+    title="SmartSchola API",
     description="School Management System - BLESSTech-X Build",
-    version="1.0.0",
+    version="1.1.0",
 )
 
-# ── CORS FIX (Ensures Vercel can always talk to Render) ─────────────────────
+# Set ALLOWED_ORIGINS to comma-separated exact frontend origins in each environment.
+_default_origins = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
+ALLOWED_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in os.getenv("ALLOWED_ORIGINS", _default_origins).split(",")
+    if origin.strip()
+]
+if "*" in ALLOWED_ORIGINS:
+    raise RuntimeError("Wildcard CORS origins are not permitted for SmartSchola.")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
-# ── Routers (Updated to use the direct imports) ─────────────────────────────
 app.include_router(auth.router)
 app.include_router(registration.router)
 app.include_router(admin.router)
@@ -37,9 +45,11 @@ app.include_router(dashboard.router)
 app.include_router(settings.router)
 app.include_router(parent_portal.router)
 
+
 @app.get("/")
 def root():
-    return {"name": "Smart Schola API", "status": "Online", "version": "1.0.0"}
+    return {"name": "SmartSchola API", "status": "online", "version": app.version}
+
 
 @app.get("/health")
 def health():
