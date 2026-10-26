@@ -2,6 +2,7 @@ import axios from 'axios'
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  timeout: 20000,
 })
 
 client.interceptors.request.use((config) => {
@@ -16,7 +17,8 @@ client.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-      window.location.href = '/login'
+      const base = import.meta.env.BASE_URL || '/'
+      window.location.assign(`${base.replace(/\/$/, '')}/login`)
     }
     return Promise.reject(error)
   }
