@@ -1,11 +1,12 @@
 export default function PageHeader({ title, subtitle, action }) {
   return (
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h1 className="font-display font-bold text-2xl" style={{ color: '#0B1D3A' }}>{title}</h1>
-        {subtitle && <p className="text-gray-400 text-sm mt-0.5">{subtitle}</p>}
+    <div className="page-heading">
+      <div className="page-heading-copy">
+        <p className="page-heading-kicker">SMARTSCHOLA WORKSPACE</p>
+        <h1>{title}</h1>
+        {subtitle && <p className="page-heading-subtitle">{subtitle}</p>}
       </div>
-      {action && <div>{action}</div>}
+      {action && <div className="page-heading-action">{action}</div>}
     </div>
   )
 }
