@@ -51,7 +51,7 @@ export default function Landing() {
               ['photo-1503676260728-1c00da094a0b','Every learner can shine']
             ].map(([image, label], index) => <div key={image} className={`hero-copy-slide ${heroSlide === index ? 'active' : ''}`} style={{backgroundImage:`linear-gradient(90deg,rgba(245,249,255,.96),rgba(245,249,255,.82) 48%,rgba(245,249,255,.35)),url(https://images.unsplash.com/${image}?auto=format&fit=crop&w=1400&q=80)`}}><span>{label}</span></div>)}
           </div>
-          <div className="hero-copy-slide-indicators" aria-label={`Hero image ${heroSlide + 1} of 4">{[0,1,2,3].map(index => <button key={index} type="button" className={heroSlide === index ? 'active' : ''} onClick={() => setHeroSlide(index)} aria-label={`Show school image ${index + 1}`} />)}</div>
+          <div className="hero-copy-slide-indicators" aria-label="Hero image controls">{[0,1,2,3].map(index => <button key={index} type="button" className={heroSlide === index ? 'active' : ''} onClick={() => setHeroSlide(index)} aria-label={`Show school image ${index + 1}`} />)}</div>
           <div className="public-hero-orb orb-one"/><div className="public-hero-orb orb-two"/>
           <div className="public-hero-content">
             <div className="public-eyebrow"><Sparkles size={15}/> A connected community for education</div>
