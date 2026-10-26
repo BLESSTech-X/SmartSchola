@@ -1,32 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-import models, schemas, auth_utils, database
 
-router = APIRouter(
-    prefix="/register",
-    tags=["Registration"]
-)
+import auth_utils
+import database
+import models
+import schemas
 
-@router.post("/", response_model=schemas.UserOut)
+router = APIRouter(prefix="/register", tags=["Registration"])
+
+
+@router.post("/", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
-    # Check if user already exists
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(
-            status_code=400, 
-            detail="Email already registered"
-        )
-    
-    # Hash the password and create user
-    hashed_pwd = auth_utils.get_password_hash(user.password)
+    """Public self-registration creates only a least-privileged student account.
+
+    Staff and administrator accounts must be provisioned through a separately
+    authorised workflow. A client-supplied role is never trusted.
+    """
+    email = user.email.strip().lower()
+    existing = db.query(models.User).filter(models.User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+
+    try:
+        hashed_password = auth_utils.get_password_hash(user.password)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
     new_user = models.User(
-        email=user.email,
-        hashed_password=hashed_pwd,
-        full_name=user.full_name,
-        role=user.role
+        email=email,
+        hashed_password=hashed_password,
+        full_name=user.full_name.strip(),
+        role="student",
+        is_active=True,
     )
-    
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        db.commit()
+        db.refresh(new_user)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Unable to create account")
+
     return new_user
