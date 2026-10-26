@@ -122,6 +122,15 @@ export default function Students() {
                 </div>
               </article>
             ))}
+            {pages > 1 && (
+              <div className="mobile-student-pagination">
+                <span>Page {page} of {pages} · {total} students</span>
+                <div>
+                  <button disabled={page===1} onClick={() => setPage(p=>p-1)}>Previous</button>
+                  <button disabled={page===pages} onClick={() => setPage(p=>p+1)}>Next</button>
+                </div>
+              </div>
+            )}
           </div>
           <div className="overflow-x-auto desktop-student-table">
             <table className="w-full">
