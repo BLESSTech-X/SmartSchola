@@ -1,6 +1,37 @@
-node_modules/
-venv/
-.env
+# Python
 __pycache__/
-.DS_Store
+*.py[cod]
+*.pyd
+.Python
+venv/
+.venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.coverage
+htmlcov/
+
+# JavaScript
+node_modules/
 dist/
+build/
+.vite/
+
+# Local databases and data exports
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.csv
+*.xlsx
+
+# IDE / OS
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and local artifacts
+*.log
+*.tmp

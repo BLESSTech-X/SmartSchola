@@ -16,11 +16,13 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!form.username || !form.password) { setError('Please enter username and password'); return }
+    if (!form.username || !form.password) { setError('Please enter your email and password'); return }
     setLoading(true)
     try {
       const { data } = await client.post('/auth/login', form)
-      login(data.access_token, data.user)
+      client.defaults.headers.Authorization = `Bearer ${data.access_token}`
+      const { data: me } = await client.get('/auth/me', { headers: { Authorization: `Bearer ${data.access_token}` } })
+      login(data.access_token, me)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed. Check your credentials.')
@@ -42,12 +44,12 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-600 block mb-1.5">Username</label>
+            <label className="text-sm font-medium text-gray-600 block mb-1.5">Email address</label>
             <input
-              type="text"
+              type="email"
               value={form.username}
               onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
-              placeholder="Enter your username"
+              placeholder="Enter your school account email"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 transition-all"
               style={{ focusRingColor: '#F5A623' }}
               onFocus={e => e.target.style.borderColor = '#F5A623'}

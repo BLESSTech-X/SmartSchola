@@ -1,47 +1,39 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 
-# Load environment variables
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
 load_dotenv()
 
-# 1. Fetch and Fix Database URL
-DATABASE_URL = os.getenv("DATABASE_URL")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
 if not DATABASE_URL:
-    # Fallback to local for development if .env is missing
-    DATABASE_URL = "sqlite:///./smartschola.db"
+    if ENVIRONMENT == "production":
+        raise RuntimeError("Production requires DATABASE_URL; refusing to use a local SQLite database.")
+    DATABASE_URL = "sqlite:///./smartschola-dev.db"
 
-# SQLAlchemy 1.4+ requires 'postgresql://' instead of 'postgres://'
+# Normalise older provider URLs without logging credentials.
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# 2. Connection Arguments
-# check_same_thread is strictly for SQLite; we exclude it for Postgres/Supabase
-connect_args = {}
-if "sqlite" in DATABASE_URL:
-    connect_args = {"check_same_thread": False}
+if ENVIRONMENT == "production" and not DATABASE_URL.startswith(("postgresql://", "postgresql+psycopg2://")):
+    raise RuntimeError("Production SmartSchola must use PostgreSQL.")
 
-# 3. Create Optimized Engine
-# pool_pre_ping: Essential for Supabase to reconnect if the tunnel drops
-# pool_size: Standard for small to medium apps
-# max_overflow: Allows temporary bursts in traffic
-engine = create_engine(
-    DATABASE_URL,
-    connect_args=connect_args,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    pool_recycle=300
-)
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
-# 4. Session and Base Setup
+engine_options = {
+    "pool_pre_ping": True,
+}
+if not DATABASE_URL.startswith("sqlite"):
+    engine_options.update({"pool_size": 5, "max_overflow": 10, "pool_recycle": 300})
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args, **engine_options)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# 5. Dependency for FastAPI
+
 def get_db():
     db = SessionLocal()
     try:

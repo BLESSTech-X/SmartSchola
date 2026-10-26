@@ -1,32 +1,36 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
-# --- AUTH SCHEMAS ---
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+
 class Token(BaseModel):
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
+
 
 class TokenData(BaseModel):
     username: Optional[str] = None
     role: Optional[str] = None
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
 
-# --- USER SCHEMAS ---
+class UserLogin(BaseModel):
+    # The existing frontend calls this field "username"; it must contain an email.
+    username: EmailStr
+    password: str = Field(min_length=1, max_length=256)
+
+
 class UserBase(BaseModel):
     email: EmailStr
-    full_name: str
+    full_name: str = Field(min_length=1, max_length=160)
     role: str = "student"
 
+
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=10, max_length=128)
+
 
 class UserOut(UserBase):
     id: int
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
