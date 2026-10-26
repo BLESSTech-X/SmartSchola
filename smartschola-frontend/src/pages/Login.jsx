@@ -22,7 +22,7 @@ export default function Login() {
       return
     }
     setLoading(true)
-    // Intentionally local-only: temporary demonstration login, no API/database call.
+    // Temporary local-only demonstration login: no API or database call.
     window.setTimeout(() => {
       if (form.username.trim().toLowerCase() === DEMO_EMAIL && form.password === DEMO_PASSWORD) {
         login('smartschola-demo-session', {
@@ -54,15 +54,13 @@ export default function Login() {
             <ShieldCheck size={14} /> DEMO ACCESS · FICTIONAL DATA ONLY
           </div>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="text-sm font-medium text-gray-700 block mb-1.5">Administrator email</label>
             <input id="email" type="email" autoComplete="username" required value={form.username}
               onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
               placeholder="admin@smartschola.zm"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
-            />
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
           </div>
           <div>
             <label htmlFor="password" className="text-sm font-medium text-gray-700 block mb-1.5">Password</label>
@@ -70,8 +68,7 @@ export default function Login() {
               <input id="password" type={showPass ? 'text' : 'password'} autoComplete="current-password" required value={form.password}
                 onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                 placeholder="Enter demo password"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 pr-12"
-              />
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 pr-12" />
               <button type="button" aria-label={showPass ? 'Hide password' : 'Show password'} onClick={() => setShowPass(!showPass)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 p-1">
                 {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -85,7 +82,6 @@ export default function Login() {
             {loading ? 'Opening demo…' : 'Sign in to SmartSchola'}
           </button>
         </form>
-
         <div className="mt-5 rounded-2xl bg-slate-50 border border-slate-200 p-4">
           <p className="text-xs font-bold tracking-wide text-slate-600 mb-2">DEMO LOGIN DETAILS</p>
           <p className="text-sm text-slate-700"><span className="font-medium">Email:</span> admin@smartschola.zm</p>
