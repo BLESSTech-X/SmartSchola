@@ -35,7 +35,7 @@ export default function Landing() {
           <a href="#benefits" onClick={() => setMenuOpen(false)}>Platform features</a>
           <a href="#for-schools" onClick={() => setMenuOpen(false)}>For school leaders</a>
           <Link to="/login" className="public-login-link" onClick={() => setMenuOpen(false)}><LockKeyhole size={16}/> Sign in</Link>
-          <a href="#for-schools" className="public-join-button" onClick={() => setMenuOpen(false)}>Register your school <ArrowRight size={17}/></a>
+          <a href="#for-schools" className="public-join-button" onClick={() => setMenuOpen(false)}>Headmaster: register your school <ArrowRight size={17}/></a>
         </nav>
       </header>
 
@@ -45,7 +45,7 @@ export default function Landing() {
           <div className="public-hero-content">
             <div className="public-eyebrow"><Sparkles size={15}/> A connected community for education</div>
             <h1>Where every school<br/><span>has a place to shine.</span></h1>
-            <p className="public-hero-copy">Discover schools, celebrate learning, and bring school life together. SmartSchola connects each school's public presence with the tools its people need behind the scenes.</p>
+            <p className="public-hero-copy">Discover schools, celebrate learning, and bring school life together. SmartSchola connects each school's public presence with the tools its people need behind the scenes. Each school is managed by its own authorised leadership.</p>
             <div className="public-hero-actions">
               <a href="#discover" className="public-button primary">Explore schools <ArrowRight size={18}/></a>
               <a href="#for-schools" className="public-button secondary">Register your school <ChevronRight size={18}/></a>
@@ -78,7 +78,7 @@ export default function Landing() {
           <div className="capability-grid" id="benefits">{capabilities.map(({icon: Icon,title,text,tone}) => <article className="capability-card" key={title}><span className={`capability-icon ${tone}`}><Icon size={22}/></span><h3>{title}</h3><p>{text}</p></article>)}</div>
         </section>
 
-        <section className="public-school-cta" id="for-schools"><div className="cta-decoration cta-decoration-one"/><div className="cta-decoration cta-decoration-two"/><div className="school-cta-content"><span className="public-section-kicker">FOR SCHOOL LEADERS</span><h2>Give your school a home<br/>on SmartSchola.</h2><p>Build your school's digital presence and prepare to connect your team, learners and families in one place.</p><div className="cta-actions"><a className="public-button cta-primary" href="mailto:singbless89@gmail.com?subject=SmartSchola%20School%20Registration%20Enquiry">Register your school <ArrowRight size={18}/></a><Link className="public-button cta-secondary" to="/login">School sign in</Link></div><small>Start your school registration enquiry. The SmartSchola team will guide you through verification and onboarding.</small></div><div className="cta-side-card"><span className="cta-side-icon"><GraduationCap size={26}/></span><strong>Your school, recognised.</strong><p>A branded public profile, school announcements, events and a connected school workspace.</p><div><CheckCircle2 size={16}/> One school identity</div><div><CheckCircle2 size={16}/> One connected workspace</div><div><CheckCircle2 size={16}/> Different access for each role</div></div></section>
+        <section className="public-school-cta" id="for-schools"><div className="cta-decoration cta-decoration-one"/><div className="cta-decoration cta-decoration-two"/><div className="school-cta-content"><span className="public-section-kicker">FOR SCHOOL LEADERS</span><h2>Give your school a home<br/>on SmartSchola.</h2><p>Build your school's digital presence and prepare to connect your team, learners and families in one place.</p><div className="cta-actions"><a className="public-button cta-primary" href="mailto:singbless89@gmail.com?subject=SmartSchola%20School%20Registration%20Enquiry">Register your school <ArrowRight size={18}/></a><Link className="public-button cta-secondary" to="/login">Sign in to a school</Link></div><small>School registration is separate from sign-in and is reserved for headmasters or verified school owners.</small></div><div className="cta-side-card"><span className="cta-side-icon"><GraduationCap size={26}/></span><strong>Your school, recognised.</strong><p>A branded public profile and a private workspace controlled by your authorised school leadership.</p><div><CheckCircle2 size={16}/> One school identity</div><div><CheckCircle2 size={16}/> One connected workspace</div><div><CheckCircle2 size={16}/> Different access for each role</div></div></section>
       </main>
 
       <footer className="public-footer"><Link to="/" className="public-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><span><strong>SmartSchola</strong><small>Schools. Families. Futures.</small></span></Link><p>Connecting schools, learners and families.</p><div><a href="#platform">About SmartSchola</a><a href="#discover">School directory</a><a href="#for-schools">Register a school</a><Link to="/login">Sign in by role</Link></div><small>© {new Date().getFullYear()} SmartSchola · Built for a connected school community.</small></footer>
