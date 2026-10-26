@@ -301,3 +301,13 @@ body { background: var(--ss-page); color: var(--ss-ink); }
  .mobile-student-actions button.danger { color:#B44843; background:#FFF7F6; border-color:#F4E0DE; }
  .desktop-student-table { display:none; }
 }
+
+
+.mobile-student-pagination { display:none; }
+@media (max-width:767px) {
+ .mobile-student-pagination { display:flex; flex-direction:column; gap:10px; padding:4px 2px 2px; }
+ .mobile-student-pagination > span { color:#8491A4; font-size:10px; text-align:center; }
+ .mobile-student-pagination > div { display:flex; gap:8px; }
+ .mobile-student-pagination button { flex:1; min-height:40px; border:1px solid #DDE5EE; border-radius:10px; background:#F7F9FC; color:#284360; font-size:11px; font-weight:700; }
+ .mobile-student-pagination button:disabled { opacity:.4; }
+}
