@@ -22,14 +22,14 @@ function ProtectedLayout() {
       <main className="app-main">
         <div className="page-content">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/students" element={<Students />} />
-            <Route path="/marks" element={<MarkEntry />} />
-            <Route path="/results" element={<Results />} />
-            <Route path="/fees" element={<FeeTracker />} />
-            <Route path="/sms" element={<SMS />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route index element={<Dashboard />} />
+            <Route path="students" element={<Students />} />
+            <Route path="marks" element={<MarkEntry />} />
+            <Route path="results" element={<Results />} />
+            <Route path="fees" element={<FeeTracker />} />
+            <Route path="sms" element={<SMS />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/workspace" replace />} />
           </Routes>
         </div>
       </main>
