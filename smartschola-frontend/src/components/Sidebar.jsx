@@ -4,13 +4,13 @@ import { LayoutDashboard, Users, ClipboardList, Award, Wallet, MessageSquare, Se
 import { useAuth } from '../context/AuthContext.jsx'
 
 const links = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/students', icon: Users, label: 'Students' },
-  { to: '/marks', icon: ClipboardList, label: 'Mark Entry' },
-  { to: '/results', icon: Award, label: 'Results' },
-  { to: '/fees', icon: Wallet, label: 'Fee Tracker' },
-  { to: '/sms', icon: MessageSquare, label: 'SMS Center' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/workspace', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/workspace/students', icon: Users, label: 'Students' },
+  { to: '/workspace/marks', icon: ClipboardList, label: 'Mark Entry' },
+  { to: '/workspace/results', icon: Award, label: 'Results' },
+  { to: '/workspace/fees', icon: Wallet, label: 'Fee Tracker' },
+  { to: '/workspace/sms', icon: MessageSquare, label: 'SMS Center' },
+  { to: '/workspace/settings', icon: Settings, label: 'Settings' },
 ]
 const mobilePrimary = links.slice(0, 4)
 const mobileMore = links.slice(4)
@@ -104,7 +104,7 @@ export default function Sidebar() {
           </NavLink>
         ))}
         <button className="mobile-more-link mobile-logout" onClick={handleLogout}><span className="mobile-more-icon"><LogOut size={18}/></span><span>Log out</span><span className="mobile-more-arrow">›</span></button>
-        <div className="mobile-demo-note">Demo access · Use fictional school data only</div>
+        <div className="mobile-demo-note">Your school workspace</div>
       </div>
     </>
   )
