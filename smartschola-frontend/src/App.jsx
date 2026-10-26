@@ -1,22 +1,3 @@
-// Smart Schola Frontend — React + Vite + Tailwind
-// =====================================================
-// SETUP & RUN (Windows Command Prompt):
-//   cd smartschola-frontend
-//   npm install
-//   copy .env.example .env
-//   npm run dev
-//   Open: http://localhost:5173
-//
-// BUILD FOR PRODUCTION:
-//   npm run build
-//
-// DEPLOY TO VERCEL:
-//   npm install -g vercel
-//   vercel login
-//   vercel --prod
-//   Set in Vercel Dashboard: VITE_API_URL=https://your-backend.vercel.app
-// =====================================================
-
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
@@ -37,6 +18,9 @@ function ProtectedLayout() {
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs sm:text-sm text-amber-900">
+          <strong>DEMO MODE:</strong> Use fictional test information only. Login is hard-coded; connected modules may still require their configured backend.
+        </div>
         <div className="page-enter">
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -56,7 +40,7 @@ function ProtectedLayout() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/SmartSchola">
       <AuthProvider>
         <ToastProvider>
           <Routes>
