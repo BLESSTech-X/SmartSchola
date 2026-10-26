@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck, UserRound, BookOpen, BriefcaseBusiness, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck, UserRound, BookOpen, BriefcaseBusiness,  } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import client from '../api/client.js'
 
 const roles = [
-  { id: 'admin', label: 'Headmaster / Admin', icon: BriefcaseBusiness, description: 'School management and administration', identityLabel: 'Work email address', identityPlaceholder: 'name@school.edu.zm', autocomplete: 'username' },
-  { id: 'teacher', label: 'Teacher', icon: BookOpen, description: 'Classes, marks and learner records', identityLabel: 'Teacher email or staff ID', identityPlaceholder: 'Email address or staff ID', autocomplete: 'username' },
-  { id: 'student', label: 'Student', icon: GraduationCap, description: 'Learning, results and school updates', identityLabel: 'Student ID or username', identityPlaceholder: 'Enter your student ID', autocomplete: 'username' },
-  { id: 'parent', label: 'Parent / Guardian', icon: UserRound, description: 'Your child’s updates and reports', identityLabel: 'Parent email or account ID', identityPlaceholder: 'Email address or account ID', autocomplete: 'username' },
+  { id: 'headmaster', label: 'Headmaster', icon: BriefcaseBusiness, description: 'Register and manage your school', identityLabel: 'Headmaster email address', identityPlaceholder: 'name@school.edu.zm', autocomplete: 'username' },
+  { id: 'teacher', label: 'Teacher', icon: BookOpen, description: 'Classes, marks and learner records', identityLabel: 'Teacher email or staff ID', identityPlaceholder: 'Enter your staff email or ID', autocomplete: 'username' },
+  { id: 'student', label: 'Student', icon: GraduationCap, description: 'Learning, results and school updates', identityLabel: 'Student ID', identityPlaceholder: 'Enter the ID given by your teacher', autocomplete: 'username' },
+  { id: 'parent', label: 'Parent / Guardian', icon: UserRound, description: 'Your child’s updates and reports', identityLabel: 'Student ID / family ID', identityPlaceholder: 'Enter the ID provided by the school', autocomplete: 'username' },
 ]
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' })
-  const [role, setRole] = useState('admin')
+  const [role, setRole] = useState('headmaster')
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,7 +38,7 @@ export default function Login() {
       const accessToken = tokenResponse.data.access_token
       const profileResponse = await client.get('/auth/me', { headers: { Authorization: `Bearer ${accessToken}` } })
       const profile = profileResponse.data
-      if (profile.role && ![role, role === 'admin' ? 'headmaster' : role].includes(String(profile.role).toLowerCase())) {
+      if (profile.role && ![role, role === 'headmaster' ? 'admin' : role, role === 'headmaster' ? 'school_admin' : role].includes(String(profile.role).toLowerCase())) {
         setError('This account does not match the selected sign-in type. Choose the correct role or contact your school administrator.')
         return
       }
@@ -61,7 +61,7 @@ export default function Login() {
           <span className="login-brand-mark"><GraduationCap size={31}/></span>
           <span className="public-section-kicker">SMARTSCHOLA SCHOOL PORTAL</span>
           <h1>One school.<br/><span>Every role connected.</span></h1>
-          <p>A welcoming place for school leaders, teachers, learners and families—with access tailored to the account your school provides.</p>
+          <p>A headmaster registers and manages their school. Teachers are authorised by school leadership, and students and parents use school-issued credentials.</p>
           <div className="login-role-points">
             <span><BriefcaseBusiness size={17}/> School leadership</span>
             <span><BookOpen size={17}/> Teaching and learning</span>
@@ -76,7 +76,7 @@ export default function Login() {
           <Link to="/" className="login-mobile-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><strong>SmartSchola</strong></Link>
           <span className="public-section-kicker">WELCOME BACK</span>
           <h2>Sign in to your school</h2>
-          <p className="login-intro">{schoolSlug ? 'Continue from your selected school profile. Choose your role to see the right sign-in fields.' : 'Choose how you access SmartSchola, then enter the account details issued by your school.'}</p>
+          <p className="login-intro">{schoolSlug ? 'Continue from your selected school profile. Choose your role to see the right sign-in fields.' : 'Choose your role. School leaders register and manage schools; teachers, students and parents sign in with credentials issued by their school.'}</p>
           {schoolSlug && <div className="login-school-context"><GraduationCap size={17}/><span>School profile selected</span><small>{schoolSlug.replaceAll('-', ' ')}</small></div>}
           <div className="login-role-heading"><span>How are you signing in?</span><small>Select your role</small></div>
           <div className="login-role-grid" role="group" aria-label="Choose sign-in role">
@@ -84,14 +84,14 @@ export default function Login() {
           </div>
           <form onSubmit={handleSubmit}>
             <label htmlFor="login-identity">{selectedRole.identityLabel}</label>
-            <input id="login-identity" type={role === 'admin' ? 'email' : 'text'} autoComplete={selectedRole.autocomplete} required value={form.username} onChange={e => setForm(p => ({...p, username:e.target.value}))} placeholder={selectedRole.identityPlaceholder}/>
+            <input id="login-identity" type={role === 'headmaster' || (role === 'teacher' && form.username.includes('@')) ? 'email' : 'text'} autoComplete={selectedRole.autocomplete} required value={form.username} onChange={e => setForm(p => ({...p, username:e.target.value}))} placeholder={selectedRole.identityPlaceholder}/>
             <label htmlFor="login-password">Password</label>
             <div className="login-password-wrap"><input id="login-password" type={showPass ? 'text' : 'password'} autoComplete="current-password" required value={form.password} onChange={e => setForm(p => ({...p,password:e.target.value}))} placeholder="Enter your password"/><button type="button" onClick={() => setShowPass(v=>!v)} aria-label={showPass ? 'Hide password' : 'Show password'}>{showPass ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
             {error && <div role="alert" className="login-error"><ShieldCheck size={17}/><span>{error}</span></div>}
-            <button className="login-submit" type="submit" disabled={loading}>{loading ? 'Checking your access…' : <><LockKeyhole size={17}/> Sign in as {selectedRole.label}</>}</button>
+            <button className="login-submit" type="submit" disabled={loading}>{loading ? 'Checking your access…' : <><LockKeyhole size={17}/> Continue as {selectedRole.label}</>}</button>
           </form>
           <div className="login-security-note"><ShieldCheck size={17}/><span>Use only the account issued to you by your school. Never share your password with another person.</span></div>
-          <p className="login-help">Need an account or password reset? Ask your school administrator. Parents and students should use the credentials issued for their own account.</p>
+          <p className="login-help">Headmasters: register your school from the SmartSchola home page. Teachers, students and parents: your school must issue your sign-in credentials.</p>
         </div>
       </main>
     </div>
