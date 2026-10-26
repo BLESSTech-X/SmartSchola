@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck, UserRound, BookOpen, BriefcaseBusiness,  } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import client from '../api/client.js'
@@ -24,6 +24,7 @@ export default function Login() {
   const selectedRole = roles.find(item => item.id === role) || roles[0]
   const RoleIcon = selectedRole.icon
   const apiConfigured = Boolean(import.meta.env.VITE_API_URL) || !import.meta.env.PROD
+  const schoolNames = { 'brainsmart-school': 'BrainSmart School', 'greenfield-academy': 'Greenfield Learning Academy', 'horizon-preparatory': 'Horizon Preparatory School' }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -53,6 +54,8 @@ export default function Login() {
     }
   }
 
+  if (!schoolSlug) return <Navigate to="/school-sign-in" replace />
+
   return (
     <div className="login-page">
       <aside className="login-side-panel">
@@ -76,8 +79,8 @@ export default function Login() {
           <Link to="/" className="login-mobile-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><strong>SmartSchola</strong></Link>
           <span className="public-section-kicker">WELCOME BACK</span>
           <h2>Sign in to your school</h2>
-          <p className="login-intro">{schoolSlug ? 'Continue from your selected school profile. Choose your role to see the right sign-in fields.' : 'Choose your role. School leaders register and manage schools; teachers, students and parents sign in with credentials issued by their school.'}</p>
-          {schoolSlug && <div className="login-school-context"><GraduationCap size={17}/><span>School profile selected</span><small>{schoolSlug.replaceAll('-', ' ')}</small></div>}
+          <p className="login-intro">{schoolSlug ? 'You selected a school. Choose your role to continue with the credentials issued by that school.' : 'Choose your role. School leaders register and manage schools; teachers, students and parents sign in with credentials issued by their school.'}</p>
+          {schoolSlug && <div className="login-school-context"><GraduationCap size={17}/><span>School profile selected</span><small>{schoolNames[schoolSlug] || schoolSlug.replaceAll('-', ' ')}</small></div>}
           <div className="login-role-heading"><span>How are you signing in?</span><small>Select your role</small></div>
           <div className="login-role-grid" role="group" aria-label="Choose sign-in role">
             {roles.map(item => { const Icon = item.icon; return <button key={item.id} type="button" className={role === item.id ? 'login-role-option selected' : 'login-role-option'} onClick={() => { setRole(item.id); setError('') }} aria-pressed={role === item.id}><span className="login-role-icon"><Icon size={19}/></span><span className="login-role-copy"><strong>{item.label}</strong><small>{item.description}</small></span><span className="login-role-radio"/></button> })}
