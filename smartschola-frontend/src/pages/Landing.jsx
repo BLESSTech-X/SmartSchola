@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, ChevronRight, GraduationCap, HeartHandshake, LockKeyhole, Menu, Search, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
 
@@ -18,7 +18,9 @@ const capabilities = [
 export default function Landing() {
   const [query, setQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [heroSlide, setHeroSlide] = useState(0)
   const navigate = useNavigate()
+  useEffect(() => { const timer = window.setInterval(() => setHeroSlide(value => (value + 1) % 4), 4800); return () => window.clearInterval(timer) }, [])
   const filtered = useMemo(() => profilePreviews.filter(s => `${s.name} ${s.location} ${s.type}`.toLowerCase().includes(query.toLowerCase())), [query])
 
   return (
@@ -41,6 +43,15 @@ export default function Landing() {
 
       <main>
         <section className="public-hero">
+          <div className={`hero-copy-slideshow slide-${heroSlide}`} aria-hidden="true">
+            {[
+              ['photo-1509062522246-3755977927d7','Learning together'],
+              ['photo-1577896851231-70ef18881754','Teachers inspiring learners'],
+              ['photo-1529390079861-591de354faf5','A connected school community'],
+              ['photo-1503676260728-1c00da094a0b','Every learner can shine']
+            ].map(([image, label], index) => <div key={image} className={`hero-copy-slide ${heroSlide === index ? 'active' : ''}`} style={{backgroundImage:`linear-gradient(90deg,rgba(245,249,255,.96),rgba(245,249,255,.82) 48%,rgba(245,249,255,.35)),url(https://images.unsplash.com/${image}?auto=format&fit=crop&w=1400&q=80)`}}><span>{label}</span></div>)}
+          </div>
+          <div className="hero-copy-slide-indicators" aria-label={`Hero image ${heroSlide + 1} of 4">{[0,1,2,3].map(index => <button key={index} type="button" className={heroSlide === index ? 'active' : ''} onClick={() => setHeroSlide(index)} aria-label={`Show school image ${index + 1}`} />)}</div>
           <div className="public-hero-orb orb-one"/><div className="public-hero-orb orb-two"/>
           <div className="public-hero-content">
             <div className="public-eyebrow"><Sparkles size={15}/> A connected community for education</div>
@@ -81,6 +92,7 @@ export default function Landing() {
         <section className="public-school-cta" id="for-schools"><div className="cta-decoration cta-decoration-one"/><div className="cta-decoration cta-decoration-two"/><div className="school-cta-content"><span className="public-section-kicker">FOR SCHOOL LEADERS</span><h2>Give your school a home<br/>on SmartSchola.</h2><p>Build your school's digital presence and prepare to connect your team, learners and families in one place.</p><div className="cta-actions"><a className="public-button cta-primary" href="mailto:singbless89@gmail.com?subject=SmartSchola%20School%20Registration%20Enquiry">Register your school <ArrowRight size={18}/></a><Link className="public-button cta-secondary" to="/login">Sign in to a school</Link></div><small>School registration is separate from sign-in and is reserved for headmasters or verified school owners.</small></div><div className="cta-side-card"><span className="cta-side-icon"><GraduationCap size={26}/></span><strong>Your school, recognised.</strong><p>A branded public profile and a private workspace controlled by your authorised school leadership.</p><div><CheckCircle2 size={16}/> One school identity</div><div><CheckCircle2 size={16}/> One connected workspace</div><div><CheckCircle2 size={16}/> Different access for each role</div></div></section>
       </main>
 
+      <nav className="public-bottom-nav" aria-label="Quick navigation"><Link to="/" className="active"><GraduationCap size={18}/><span>Home</span></Link><a href="#discover"><Search size={18}/><span>Schools</span></a><a href="#platform"><BookOpen size={18}/><span>Features</span></a><a href="#for-schools"><Users size={18}/><span>For schools</span></a><Link to="/login"><LockKeyhole size={18}/><span>Sign in</span></Link></nav>
       <footer className="public-footer"><Link to="/" className="public-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><span><strong>SmartSchola</strong><small>Schools. Families. Futures.</small></span></Link><p>Connecting schools, learners and families.</p><div><a href="#platform">About SmartSchola</a><a href="#discover">School directory</a><a href="#for-schools">Register a school</a><Link to="/login">Sign in by role</Link></div><small>© {new Date().getFullYear()} SmartSchola · Built for a connected school community.</small></footer>
     </div>
   )
