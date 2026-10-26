@@ -15,7 +15,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.username || !form.password) { addToast('Please fill in all fields', 'warning'); return }
+    if (!form.username || !form.password) { addToast('Please enter your email and password', 'warning'); return }
     setLoading(true)
     try {
       const { data: tokenData } = await client.post('/auth/login', form)
@@ -48,14 +48,14 @@ export default function Login() {
           <h2 className="font-display text-navy text-xl font-semibold mb-6">Staff Sign In</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
               <input
-                type="text"
+                type="email"
                 value={form.username}
                 onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                placeholder="Enter your username"
+                placeholder="Enter your school account email"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold transition-all"
-                autoComplete="username"
+                autoComplete="email"
               />
             </div>
             <div>
