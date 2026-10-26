@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Clock3, Download, ExternalLink, Facebook, GraduationCap, Images, Instagram, MapPin, Menu, Megaphone, Phone, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
 
@@ -59,6 +59,8 @@ export default function SchoolProfile() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [galleryFilter, setGalleryFilter] = useState('All')
   const [activeImage, setActiveImage] = useState(null)
+
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) }, [slug])
 
   if (!school) return <main className="school-profile-not-found"><GraduationCap size={42}/><h1>School profile not found</h1><p>This profile may not be published yet.</p><Link to="/" className="public-button primary">Back to SmartSchola <ArrowRight size={17}/></Link></main>
 
