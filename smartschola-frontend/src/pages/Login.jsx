@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { GraduationCap, Eye, EyeOff, ShieldCheck } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-
-const DEMO_EMAIL = 'admin@smartschola.zm'
-const DEMO_PASSWORD = 'SmartSchola2026!'
+import client from '../api/client.js'
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' })
@@ -13,82 +11,59 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const schoolSlug = searchParams.get('school')
+  const apiConfigured = Boolean(import.meta.env.VITE_API_URL) || !import.meta.env.PROD
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!form.username.trim() || !form.password) {
-      setError('Enter the demo administrator email and password.')
+    if (!apiConfigured) {
+      setError('School sign-in is being connected. Please contact SmartSchola support; do not enter real school credentials here yet.')
       return
     }
     setLoading(true)
-    // Temporary local-only demonstration login: no API or database call.
-    window.setTimeout(() => {
-      if (form.username.trim().toLowerCase() === DEMO_EMAIL && form.password === DEMO_PASSWORD) {
-        login('smartschola-demo-session', {
-          id: 'demo-admin',
-          email: DEMO_EMAIL,
-          name: 'SmartSchola Demo Administrator',
-          full_name: 'SmartSchola Demo Administrator',
-          role: 'admin',
-          is_demo: true,
-        })
-        navigate('/', { replace: true })
-      } else {
-        setError('Incorrect demo login details. Use the credentials shown below.')
-      }
+    try {
+      const tokenResponse = await client.post('/auth/login', form)
+      const accessToken = tokenResponse.data.access_token
+      const profileResponse = await client.get('/auth/me', { headers: { Authorization: `Bearer ${accessToken}` } })
+      login(accessToken, profileResponse.data)
+      navigate('/workspace', { replace: true })
+    } catch (err) {
+      if (err.response?.status === 401) setError('The email or password is incorrect.')
+      else if (err.response?.data?.detail) setError(err.response.data.detail)
+      else setError('We could not connect to the sign-in service. Please try again later.')
+    } finally {
       setLoading(false)
-    }, 250)
+    }
   }
 
   return (
-    <div className="min-h-screen animated-bg flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7 sm:p-8 page-enter">
-        <div className="text-center mb-7">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: '#0B1D3A' }}>
-            <GraduationCap size={32} style={{ color: '#F5A623' }} />
-          </div>
-          <h1 className="font-display font-bold text-3xl" style={{ color: '#0B1D3A' }}>SmartSchola</h1>
-          <p className="text-gray-500 text-sm mt-1">School Management · Zambia</p>
-          <div className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-            <ShieldCheck size={14} /> DEMO ACCESS · FICTIONAL DATA ONLY
-          </div>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="text-sm font-medium text-gray-700 block mb-1.5">Administrator email</label>
-            <input id="email" type="email" autoComplete="username" required value={form.username}
-              onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
-              placeholder="admin@smartschola.zm"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-          </div>
-          <div>
-            <label htmlFor="password" className="text-sm font-medium text-gray-700 block mb-1.5">Password</label>
-            <div className="relative">
-              <input id="password" type={showPass ? 'text' : 'password'} autoComplete="current-password" required value={form.password}
-                onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                placeholder="Enter demo password"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 pr-12" />
-              <button type="button" aria-label={showPass ? 'Hide password' : 'Show password'} onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 p-1">
-                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-          {error && <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
-          <button type="submit" disabled={loading}
-            className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-60"
-            style={{ background: '#0B1D3A' }}>
-            {loading ? 'Opening demo…' : 'Sign in to SmartSchola'}
-          </button>
-        </form>
-        <div className="mt-5 rounded-2xl bg-slate-50 border border-slate-200 p-4">
-          <p className="text-xs font-bold tracking-wide text-slate-600 mb-2">DEMO LOGIN DETAILS</p>
-          <p className="text-sm text-slate-700"><span className="font-medium">Email:</span> admin@smartschola.zm</p>
-          <p className="text-sm text-slate-700 mt-1"><span className="font-medium">Password:</span> SmartSchola2026!</p>
-        </div>
-        <p className="text-center text-xs text-slate-400 mt-5">Temporary demonstration access. Do not enter real student or financial information.</p>
+    <div className="login-page">
+      <div className="login-side-panel">
+        <Link to="/" className="login-back-link"><ArrowLeft size={16}/> Back to SmartSchola</Link>
+        <div className="login-side-content"><span className="login-brand-mark"><GraduationCap size={31}/></span><span className="public-section-kicker">SMARTSCHOLA SCHOOL PORTAL</span><h1>Your school.<br/><span>Your connected workspace.</span></h1><p>Secure access for authorised school teams. Your role and school membership determine the tools and records available to you.</p><div className="login-assurance"><ShieldCheck size={18}/><span><strong>School data deserves care.</strong><small>Access should be verified and permission-based.</small></span></div></div>
+        <div className="login-side-footer">Schools. Families. Futures.</div>
       </div>
+      <main className="login-form-side">
+        <div className="login-form-card">
+          <Link to="/" className="login-mobile-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><strong>SmartSchola</strong></Link>
+          <span className="public-section-kicker">WELCOME BACK</span>
+          <h2>Sign in to your school</h2>
+          <p className="login-intro">{schoolSlug ? 'Continue from your selected school profile. Your access will be checked securely.' : 'Enter the account details provided by your school administrator.'}</p>
+          {schoolSlug && <div className="login-school-context"><GraduationCap size={17}/><span>School profile selected</span><small>{schoolSlug.replaceAll('-', ' ')}</small></div>}
+          <form onSubmit={handleSubmit}>
+            <label htmlFor="login-email">Email address</label>
+            <input id="login-email" type="email" autoComplete="username" required value={form.username} onChange={e => setForm(p => ({...p, username:e.target.value}))} placeholder="you@school.edu.zm"/>
+            <label htmlFor="login-password">Password</label>
+            <div className="login-password-wrap"><input id="login-password" type={showPass ? 'text' : 'password'} autoComplete="current-password" required value={form.password} onChange={e => setForm(p => ({...p,password:e.target.value}))} placeholder="Enter your password"/><button type="button" onClick={() => setShowPass(v=>!v)} aria-label={showPass ? 'Hide password' : 'Show password'}>{showPass ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
+            {error && <div role="alert" className="login-error"><ShieldCheck size={17}/><span>{error}</span></div>}
+            <button className="login-submit" type="submit" disabled={loading}>{loading ? 'Signing in…' : <><LockKeyhole size={17}/> Sign in securely</>}</button>
+          </form>
+          <div className="login-security-note"><ShieldCheck size={17}/><span>Use only the account issued to you by your school. SmartSchola will never ask you to share your password with another person.</span></div>
+          <p className="login-help">Need access? <a href="mailto:hello@smartschola.com?subject=School%20portal%20access">Contact your school administrator</a>.</p>
+        </div>
+      </main>
     </div>
   )
 }
