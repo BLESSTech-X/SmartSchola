@@ -153,7 +153,7 @@ def reset_password(payload: schemas.PasswordResetRequest, db: Session = Depends(
     user.hashed_password = auth_utils.get_password_hash(payload.new_password)
     token_row.used_at = datetime.now(timezone.utc)
     attempt = db.query(models.LoginAttempt).filter_by(
-        school_id=token_row.school_id, identity_key=user.email.lower()
+        school_id=token_row.school_id, identity_key=token_row.identity_key
     ).first()
     if attempt:
         attempt.failed_attempts = 0
@@ -178,10 +178,15 @@ def unblock_and_send_reset(
     ).first()
     if not membership:
         raise HTTPException(status_code=403, detail="This account is not registered to the selected school.")
-    attempt = db.query(models.LoginAttempt).filter_by(
-        school_id=school.id, identity_key=user.email.lower()
+    possible_identities = [user.email.lower()]
+    if membership.login_identifier:
+        possible_identities.append(membership.login_identifier.strip().lower())
+    attempt = db.query(models.LoginAttempt).filter(
+        models.LoginAttempt.school_id == school.id,
+        models.LoginAttempt.identity_key.in_(possible_identities),
+        models.LoginAttempt.is_blocked.is_(True),
     ).first()
-    if not attempt or not attempt.is_blocked:
+    if not attempt:
         raise HTTPException(status_code=409, detail="This school sign-in is not currently blocked.")
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
@@ -189,6 +194,7 @@ def unblock_and_send_reset(
         user_id=user.id,
         school_id=school.id,
         token_hash=token_hash,
+        identity_key=attempt.identity_key,
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=RESET_LINK_MINUTES),
     )
     db.add(reset_row)
