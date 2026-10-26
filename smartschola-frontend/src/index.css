@@ -538,3 +538,17 @@ body { background: var(--ss-page); color: var(--ss-ink); }
  .showcase-trust-chip small{font-size:9px}
  .public-join-button{justify-content:center!important}
 }
+
+/* Hero photo showcase motion: restrained, premium, reduced-motion aware */
+.showcase-photo-main img{animation:showcaseImageDrift 22s ease-in-out infinite alternate;transform-origin:center}
+.showcase-photo-top{animation:showcaseFloatTop 7s ease-in-out infinite}
+.showcase-photo-bottom{animation:showcaseFloatBottom 8s ease-in-out infinite}
+.showcase-trust-chip{animation:showcaseChipRise .8s .2s both}
+.showcase-photo-caption{animation:showcaseCaptionIn .9s .15s both}
+@keyframes showcaseImageDrift{0%{transform:scale(1)}100%{transform:scale(1.075)}}
+@keyframes showcaseFloatTop{0%,100%{transform:translate3d(0,0,0) rotate(3deg)}50%{transform:translate3d(-5px,-9px,0) rotate(1.5deg)}}
+@keyframes showcaseFloatBottom{0%,100%{transform:translate3d(0,0,0) rotate(-3deg)}50%{transform:translate3d(4px,8px,0) rotate(-1.5deg)}}
+@keyframes showcaseChipRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes showcaseCaptionIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.public-hero-photo-showcase .showcase-photo{will-change:transform}
+@media(prefers-reduced-motion:reduce){.showcase-photo-main img,.showcase-photo-top,.showcase-photo-bottom,.showcase-trust-chip,.showcase-photo-caption{animation:none!important;will-change:auto}}
