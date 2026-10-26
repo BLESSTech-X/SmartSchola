@@ -281,3 +281,23 @@ body { background: var(--ss-page); color: var(--ss-ink); }
  .quick-action { padding:10px 8px; }
  .quick-action-copy small { font-size:8.5px; }
 }
+
+
+.mobile-student-list { display:none; }
+@media (max-width:767px) {
+ .mobile-student-list { display:grid; gap:11px; padding:12px; }
+ .mobile-student-card { min-width:0; padding:14px; border:1px solid #E6ECF3; border-radius:15px; background:linear-gradient(145deg,#fff,#FBFCFE); }
+ .mobile-student-card-head { display:flex; align-items:center; gap:11px; min-width:0; }
+ .mobile-student-avatar { display:grid; place-items:center; width:42px; height:42px; flex-shrink:0; border-radius:14px; background:#EAF0F8; color:#214A82; font-size:12px; font-weight:800; }
+ .mobile-student-card-name { display:flex; flex-direction:column; gap:5px; min-width:0; }
+ .mobile-student-card-name strong { color:#1E344F; font-size:13px; overflow-wrap:anywhere; }
+ .mobile-student-card-name span { color:#7B8A9D; font-size:10px; }
+ .mobile-student-details { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.7fr); gap:10px; margin:14px 0 12px; padding:11px 0; border-top:1px solid #EDF1F6; border-bottom:1px solid #EDF1F6; }
+ .mobile-student-details div { display:flex; flex-direction:column; gap:5px; min-width:0; }
+ .mobile-student-details small { color:#98A4B4; font-size:9px; text-transform:uppercase; letter-spacing:.07em; font-weight:750; }
+ .mobile-student-details span { color:#4A5D73; font-size:11px; overflow-wrap:anywhere; }
+ .mobile-student-actions { display:flex; gap:8px; }
+ .mobile-student-actions button { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; min-width:0; padding:9px 7px; border:1px solid #E2E9F1; border-radius:10px; background:#F8FAFC; color:#36516F; font-size:11px; font-weight:700; }
+ .mobile-student-actions button.danger { color:#B44843; background:#FFF7F6; border-color:#F4E0DE; }
+ .desktop-student-table { display:none; }
+}
