@@ -12,12 +12,15 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
     role: Optional[str] = None
+    school_id: Optional[int] = None
+    school_slug: Optional[str] = None
 
 
 class UserLogin(BaseModel):
-    # The existing frontend calls this field "username"; it must contain an email.
-    username: EmailStr
+    username: str = Field(min_length=1, max_length=320)
     password: str = Field(min_length=1, max_length=256)
+    school_slug: str = Field(min_length=1, max_length=100)
+    role: str = Field(min_length=1, max_length=30)
 
 
 class UserBase(BaseModel):
@@ -34,3 +37,21 @@ class UserOut(UserBase):
     id: int
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class PublicSchool(BaseModel):
+    id: int
+    name: str
+    slug: str
+    location: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PasswordResetRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+    new_password: str = Field(min_length=10, max_length=128)
+
+
+class UnblockAccountRequest(BaseModel):
+    school_slug: str = Field(min_length=1, max_length=100)
+    user_email: EmailStr
