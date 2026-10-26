@@ -2,23 +2,14 @@ import { createContext, useContext, useState, useCallback } from 'react'
 
 const AuthContext = createContext(null)
 
-const DEMO_USER = {
-  id: 'demo-admin',
-  email: 'admin@smartschola.zm',
-  name: 'SmartSchola Demo Administrator',
-  full_name: 'SmartSchola Demo Administrator',
-  role: 'admin',
-  is_demo: true,
-}
-
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [currentUser, setCurrentUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
   })
 
-  // Temporary demo authentication only. This does not call the API or database.
-  const login = useCallback((newToken, user = DEMO_USER) => {
+  // Temporary local-only demo login. No API or database request is made here.
+  const login = useCallback((newToken, user) => {
     localStorage.setItem('token', newToken)
     localStorage.setItem('user', JSON.stringify(user))
     localStorage.setItem('smartschola_demo_mode', 'true')
@@ -35,14 +26,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{
-      token,
-      currentUser,
-      isAuthenticated: !!token,
-      isDemoMode: localStorage.getItem('smartschola_demo_mode') === 'true',
-      login,
-      logout,
-    }}>
+    <AuthContext.Provider value={{ token, currentUser, isAuthenticated: !!token, isDemoMode: localStorage.getItem('smartschola_demo_mode') === 'true', login, logout }}>
       {children}
     </AuthContext.Provider>
   )
