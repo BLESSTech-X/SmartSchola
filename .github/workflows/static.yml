@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: smartschola-frontend/package-lock.json
       - name: Install dependencies and build frontend
         working-directory: smartschola-frontend
-        run: npm ci && npm run build
+        run: npm ci && npm run build && cp dist/index.html dist/404.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload built frontend
