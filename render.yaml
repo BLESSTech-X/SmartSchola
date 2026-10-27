@@ -1,0 +1,28 @@
+databases:
+  - name: smartschola-db
+    databaseName: smartschola
+    user: smartschola
+    plan: free
+
+services:
+  - type: web
+    name: smartschola-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smartschola-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://blesstech-x.github.io
+      - key: FRONTEND_BASE_URL
+        value: https://blesstech-x.github.io/SmartSchola
