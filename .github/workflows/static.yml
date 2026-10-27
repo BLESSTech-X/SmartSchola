@@ -30,7 +30,16 @@ jobs:
           cache-dependency-path: smartschola-frontend/package-lock.json
       - name: Install dependencies and build frontend
         working-directory: smartschola-frontend
-        run: npm ci && npm run build && cp dist/index.html dist/404.html
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "Missing GitHub Actions repository variable VITE_API_URL. Set it to the deployed SmartSchola API root URL (for example, https://smartschola-api.onrender.com), without /api."
+            exit 1
+          fi
+          npm ci
+          npm run build
+          cp dist/index.html dist/404.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload built frontend
