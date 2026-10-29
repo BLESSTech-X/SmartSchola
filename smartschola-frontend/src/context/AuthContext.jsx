@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { supabase } from '../lib/supabase.js'
 
 const AuthContext = createContext(null)
 
@@ -18,6 +19,25 @@ export function AuthProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
   })
 
+  useEffect(() => {
+    if (!supabase) return
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setToken(session?.access_token || null)
+      if (session) localStorage.setItem('token', session.access_token)
+      else {
+        setCurrentUser(null)
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
+    })
+    supabase.auth.getSession().then(({ data }) => {
+      const session = data.session
+      setToken(session?.access_token || null)
+      if (session) localStorage.setItem('token', session.access_token)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   const login = useCallback((accessToken, user) => {
     localStorage.setItem('token', accessToken)
     localStorage.setItem('user', JSON.stringify(user))
@@ -29,6 +49,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     localStorage.removeItem('smartschola_demo_mode')
+    if (supabase) supabase.auth.signOut()
     setToken(null)
     setCurrentUser(null)
   }, [])
