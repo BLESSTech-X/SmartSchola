@@ -10,6 +10,7 @@ import SchoolRegistration from './pages/SchoolRegistration.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Students from './pages/Students.jsx'
+import Classes from './pages/Classes.jsx'
 import MarkEntry from './pages/MarkEntry.jsx'
 import Results from './pages/Results.jsx'
 import FeeTracker from './pages/FeeTracker.jsx'
@@ -19,7 +20,7 @@ import Settings from './pages/Settings.jsx'
 function ProtectedLayout() {
   const { isAuthenticated, currentUser } = useAuth()
   const location = useLocation()
-  const routeNames = { '/workspace': 'School overview', '/workspace/students': 'Students & learners', '/workspace/marks': 'Mark entry', '/workspace/results': 'Academic results', '/workspace/fees': 'Fee tracker', '/workspace/sms': 'School communications', '/workspace/settings': 'Workspace settings' }
+  const routeNames = { '/workspace': 'School overview', '/workspace/students': 'Students & learners', '/workspace/classes': 'Classes & streams', '/workspace/marks': 'Mark entry', '/workspace/results': 'Academic results', '/workspace/fees': 'Fee tracker', '/workspace/sms': 'School communications', '/workspace/settings': 'Workspace settings' }
   const pageTitle = routeNames[location.pathname] || 'School workspace'
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return (
@@ -31,6 +32,7 @@ function ProtectedLayout() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="students" element={<Students />} />
+            <Route path="classes" element={<Classes />} />
             <Route path="marks" element={<MarkEntry />} />
             <Route path="results" element={<Results />} />
             <Route path="fees" element={<FeeTracker />} />
