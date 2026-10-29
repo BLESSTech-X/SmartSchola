@@ -6,6 +6,7 @@ import Landing from './pages/Landing.jsx'
 import SchoolProfile from './pages/SchoolProfile.jsx'
 import Login from './pages/Login.jsx'
 import SchoolSignIn from './pages/SchoolSignIn.jsx'
+import SchoolRegistration from './pages/SchoolRegistration.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Students from './pages/Students.jsx'
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/s/:slug" element={<SchoolProfile />} />
             <Route path="/school-sign-in" element={<SchoolSignIn />} />
+            <Route path="/register-school" element={<SchoolRegistration />} />
             <Route path="/login" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/workspace/*" element={<ProtectedLayout />} />
