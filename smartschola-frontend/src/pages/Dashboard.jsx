@@ -88,7 +88,7 @@ export default function Dashboard() {
           ) : loading ? (
             <div className="activity-loading"><span/><span/><span/></div>
           ) : (
-            <EmptyState icon={LayoutDashboard} title="Activity tracking is being connected" description="Recent school actions will appear here when the activity module is migrated to Supabase." />>
+            <EmptyState icon={LayoutDashboard} title="Activity tracking is being connected" description="Recent school actions will appear here when the activity module is migrated to Supabase." />
           )}
         </section>
       </div>
