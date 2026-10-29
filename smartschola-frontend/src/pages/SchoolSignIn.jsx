@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, GraduationCap, MapPin, Search, ShieldCheck, School, LockKeyhole } from 'lucide-react'
-import client from '../api/client.js'
+import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
 
 export default function SchoolSignIn() {
   const [query, setQuery] = useState('')
@@ -12,9 +12,18 @@ export default function SchoolSignIn() {
 
   useEffect(() => {
     let active = true
-    client.get('/schools/public')
-      .then(({ data }) => { if (active) setSchools(Array.isArray(data) ? data : []) })
-      .catch(() => { if (active) setLoadError('We could not load the registered school directory. Please try again shortly; do not choose a different school as a workaround.') })
+    if (!isSupabaseConfigured) {
+      setLoadError('The school directory is not configured yet. Please try again later.')
+      setLoading(false)
+      return () => { active = false }
+    }
+    supabase.from('schools').select('id,name,slug,location').eq('status', 'verified').order('name')
+      .then(({ data, error }) => {
+        if (!active) return
+        if (error) setLoadError('We could not load the registered school directory. Please try again shortly.')
+        else setSchools(data || [])
+      })
+      .catch(() => { if (active) setLoadError('We could not load the registered school directory. Please try again shortly.') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [])
@@ -45,8 +54,8 @@ export default function SchoolSignIn() {
         </article>)}
         {filtered.length === 0 && <div className="school-signin-empty"><Search size={26}/><h2>{schools.length ? 'No matching school found' : 'No registered schools are available yet'}</h2><p>{schools.length ? 'Check the spelling or ask your school administrator to confirm the registered school name.' : 'School sign-in will appear here when schools are registered and activated. Do not use a sample profile to sign in.'}</p>{query && <button type="button" onClick={() => setQuery('')}>Clear search</button>}</div>}
       </div>}
-      <div className="school-signin-safety"><LockKeyhole size={18}/><p><strong>Security notice:</strong> choose only the school that issued your credentials. Three failed sign-in attempts flag that school-specific sign-in for support verification. Support must confirm your details with the headmaster before restoring access.</p></div>
-      <div className="school-signin-register">Is your school not on SmartSchola yet? <Link to="/#for-schools">School headmasters can start registration <ArrowRight size={14}/></Link></div>
+      <div className="school-signin-safety"><LockKeyhole size={18}/><p><strong>Security notice:</strong> choose only the school that issued your credentials. Only school-approved accounts can access private school information. Additional account-protection controls will be enabled before general launch.</p></div>
+      <div className="school-signin-register">Is your school not on SmartSchola yet? <Link to="/register-school">School headmasters can start registration <ArrowRight size={14}/></Link></div>
     </section>
     <footer className="school-signin-footer">© {new Date().getFullYear()} SmartSchola · Schools. Families. Futures.</footer>
   </main>
