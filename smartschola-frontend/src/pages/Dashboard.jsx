@@ -84,7 +84,7 @@ export default function Dashboard() {
             <span className="live-indicator"><span/> Latest</span>
           </div>
           {!loading && (!stats?.recent_activity || stats.recent_activity.length === 0) ? (
-            <EmptyState icon={LayoutDashboard} title="No activity yet" description="Activity will appear here as you use the system." />
+            <EmptyState icon={LayoutDashboard} title="Activity tracking is being connected" description="Recent school actions will appear here when the activity module is migrated to Supabase." />
           ) : loading ? (
             <div className="activity-loading"><span/><span/><span/></div>
           ) : (
