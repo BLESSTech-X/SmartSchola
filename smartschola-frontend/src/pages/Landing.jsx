@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
 import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, ChevronRight, GraduationCap, HeartHandshake, LockKeyhole, Menu, Search, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
-
-const profilePreviews = [
-  { name: 'BrainSmart School', location: 'Lusaka, Zambia', type: 'Primary & Secondary', slug: 'brainsmart-school', initials: 'BS', tone: 'blue', description: 'A sample school profile showing how each school can introduce its community, programmes and news.' },
-  { name: 'Greenfield Learning Academy', location: 'Example profile', type: 'Primary School', slug: 'greenfield-academy', initials: 'GL', tone: 'green', description: 'An illustrative profile concept for a future participating school.' },
-  { name: 'Horizon Preparatory School', location: 'Example profile', type: 'Early Learning & Primary', slug: 'horizon-preparatory', initials: 'HP', tone: 'purple', description: 'An illustrative profile concept for a future participating school.' },
-]
 
 const capabilities = [
   { icon: GraduationCap, title: 'A digital home for every school', text: 'Give your school its own branded profile for news, events, galleries, admissions information and contact details.', tone: 'gold' },
@@ -19,9 +14,30 @@ export default function Landing() {
   const [query, setQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [heroSlide, setHeroSlide] = useState(0)
+  const [schools, setSchools] = useState([])
+  const [schoolsLoading, setSchoolsLoading] = useState(true)
+  const [directoryError, setDirectoryError] = useState('')
   const navigate = useNavigate()
   useEffect(() => { const timer = window.setInterval(() => setHeroSlide(value => (value + 1) % 4), 4800); return () => window.clearInterval(timer) }, [])
-  const filtered = useMemo(() => profilePreviews.filter(s => `${s.name} ${s.location} ${s.type}`.toLowerCase().includes(query.toLowerCase())), [query])
+  useEffect(() => {
+    let active = true
+    if (!isSupabaseConfigured) {
+      setDirectoryError('The live directory is being configured.')
+      setSchoolsLoading(false)
+      return () => { active = false }
+    }
+    supabase.from('schools').select('id,name,slug,location,description,logo_url,cover_url')
+      .eq('status', 'verified').order('name')
+      .then(({ data, error }) => {
+        if (!active) return
+        if (error) setDirectoryError('We could not load the live school directory. Please try again later.')
+        else setSchools(data || [])
+      })
+      .catch(() => { if (active) setDirectoryError('We could not load the live school directory. Please try again later.') })
+      .finally(() => { if (active) setSchoolsLoading(false) })
+    return () => { active = false }
+  }, [])
+  const filtered = useMemo(() => schools.filter(s => `${s.name} ${s.location || ''}`.toLowerCase().includes(query.toLowerCase())), [schools, query])
 
   return (
     <div className="public-site">
@@ -75,13 +91,15 @@ export default function Landing() {
           <div className="section-title-row"><div><span className="public-section-kicker">THE SCHOOL DIRECTORY</span><h2>Find your school community.</h2><p>Explore school profiles and see how SmartSchola can bring each school's story to life.</p></div><span className="directory-pill"><Users size={15}/> School profiles</span></div>
           <div className="school-search"><Search size={19}/><input aria-label="Search school profiles" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by school name, location or type..."/>{query && <button onClick={() => setQuery('')} aria-label="Clear search"><X size={17}/></button>}</div>
           <div className="school-preview-grid">
-            {filtered.map((school, i) => <article className="school-preview-card" key={school.slug}>
-              <div className={`school-card-cover ${school.tone}`}><div className="school-cover-shape shape-a"/><div className="school-cover-shape shape-b"/><span className="school-initials">{school.initials}</span><span className="profile-preview-tag">PROFILE PREVIEW</span></div>
-              <div className="school-card-body"><div className="school-card-meta"><span>{school.type}</span><span className="school-card-dot"/></div><h3>{school.name}</h3><p className="school-location">{school.location}</p><p className="school-description">{school.description}</p><Link to={`/s/${school.slug}`} className="school-card-link">View profile preview <ArrowRight size={16}/></Link></div>
+            {schoolsLoading && <div className="school-search-empty"><Search size={24}/><strong>Loading verified schools…</strong><span>Connecting to the live SmartSchola directory.</span></div>}
+            {!schoolsLoading && directoryError && <div className="school-search-empty" role="alert"><Search size={24}/><strong>Directory temporarily unavailable</strong><span>{directoryError}</span></div>}
+            {!schoolsLoading && !directoryError && filtered.map(school => <article className="school-preview-card" key={school.id}>
+              <div className="school-card-cover blue"><div className="school-cover-shape shape-a"/><div className="school-cover-shape shape-b"/>{school.logo_url ? <img src={school.logo_url} alt="" className="school-initials"/> : <span className="school-initials">{school.name.split(/\\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase()}</span>}<span className="profile-preview-tag">VERIFIED SCHOOL</span></div>
+              <div className="school-card-body"><div className="school-card-meta"><span>SmartSchola school</span><span className="school-card-dot"/></div><h3>{school.name}</h3><p className="school-location">{school.location || 'Location not provided'}</p><p className="school-description">{school.description || 'Discover this school community and its SmartSchola access.'}</p><Link to={`/login?school=${encodeURIComponent(school.slug)}`} className="school-card-link">Go to school sign in <ArrowRight size={16}/></Link></div>
             </article>)}
-            {filtered.length === 0 && <div className="school-search-empty"><Search size={24}/><strong>No matching profile previews</strong><span>Try a different school name or location.</span></div>}
+            {!schoolsLoading && !directoryError && filtered.length === 0 && <div className="school-search-empty"><Search size={24}/><strong>{schools.length ? 'No matching schools found' : 'No verified schools listed yet'}</strong><span>{schools.length ? 'Try another school name or location.' : 'Schools appear here after registration and verification.'}</span></div>}
           </div>
-          <p className="directory-note">The cards above are design previews, not a claim that these schools have registered. Live school listings will be populated from verified school accounts.</p>
+          <p className="directory-note">Only schools approved for public listing appear here. Private student and school records remain behind school-specific sign-in.</p>
         </section>
 
         <section className="public-platform section-wrap" id="platform">
@@ -89,7 +107,7 @@ export default function Landing() {
           <div className="capability-grid" id="benefits">{capabilities.map(({icon: Icon,title,text,tone}) => <article className="capability-card" key={title}><span className={`capability-icon ${tone}`}><Icon size={22}/></span><h3>{title}</h3><p>{text}</p></article>)}</div>
         </section>
 
-        <section className="public-school-cta" id="for-schools"><div className="cta-decoration cta-decoration-one"/><div className="cta-decoration cta-decoration-two"/><div className="school-cta-content"><span className="public-section-kicker">FOR SCHOOL LEADERS</span><h2>Give your school a home<br/>on SmartSchola.</h2><p>Build your school's digital presence and prepare to connect your team, learners and families in one place.</p><div className="cta-actions"><a className="public-button cta-primary" href="mailto:singbless89@gmail.com?subject=SmartSchola%20School%20Registration%20Enquiry">Register your school <ArrowRight size={18}/></a><Link className="public-button cta-secondary" to="/school-sign-in">Sign in to a school</Link></div><small>School registration is separate from sign-in and is reserved for headmasters or verified school owners.</small></div><div className="cta-side-card"><span className="cta-side-icon"><GraduationCap size={26}/></span><strong>Your school, recognised.</strong><p>A branded public profile and a private workspace controlled by your authorised school leadership.</p><div><CheckCircle2 size={16}/> One school identity</div><div><CheckCircle2 size={16}/> One connected workspace</div><div><CheckCircle2 size={16}/> Different access for each role</div></div></section>
+        <section className="public-school-cta" id="for-schools"><div className="cta-decoration cta-decoration-one"/><div className="cta-decoration cta-decoration-two"/><div className="school-cta-content"><span className="public-section-kicker">FOR SCHOOL LEADERS</span><h2>Give your school a home<br/>on SmartSchola.</h2><p>Build your school's digital presence and prepare to connect your team, learners and families in one place.</p><div className="cta-actions"><a className="public-button cta-primary" href="/SmartSchola/register-school">Register your school <ArrowRight size={18}/></a><Link className="public-button cta-secondary" to="/school-sign-in">Sign in to a school</Link></div><small>School registration is separate from sign-in and is reserved for headmasters or verified school owners.</small></div><div className="cta-side-card"><span className="cta-side-icon"><GraduationCap size={26}/></span><strong>Your school, recognised.</strong><p>A branded public profile and a private workspace controlled by your authorised school leadership.</p><div><CheckCircle2 size={16}/> One school identity</div><div><CheckCircle2 size={16}/> One connected workspace</div><div><CheckCircle2 size={16}/> Different access for each role</div></div></section>
       </main>
 
       <nav className="public-bottom-nav" aria-label="Quick navigation"><Link to="/" className="active"><GraduationCap size={18}/><span>Home</span></Link><a href="#discover"><Search size={18}/><span>Schools</span></a><a href="#platform"><BookOpen size={18}/><span>Features</span></a><a href="#for-schools"><Users size={18}/><span>For schools</span></a><Link to="/school-sign-in"><LockKeyhole size={18}/><span>Sign in</span></Link></nav>
