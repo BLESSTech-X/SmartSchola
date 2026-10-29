@@ -9,6 +9,10 @@ SmartSchola uses one Supabase PostgreSQL database with tenant isolation enforced
 3. Paste and run `supabase/migrations/202610290001_initial_tenant_schema.sql`.
 4. Confirm the migration completes without errors.
 
+## Apply the student register migration
+
+After the initial schema has been applied, run `supabase/migrations/202610300001_student_records.sql` in the Supabase SQL Editor. This adds the register fields used by the frontend (grade, class label, gender, parent phone and address) and a generated student reference. The existing `students` Row Level Security policies continue to scope access to active members of each school.
+
 ## Configure the frontend
 
 Set these as GitHub Actions repository **Variables** for the `github-pages` deployment:
@@ -20,7 +24,7 @@ The publishable key is intended for browser use. Never add a Supabase secret key
 
 ## Current migration boundary
 
-This migration creates the secure Supabase foundation: Auth-linked profiles, school registration, school memberships, verified public directory, academic years, classes and students. It does not yet replace every legacy FastAPI route or move existing SQLite records. Do not switch off the old API until the frontend flows have been migrated and tested against Supabase.
+The initial migration creates the secure Supabase foundation: Auth-linked profiles, school registration, school memberships, verified public directory, academic years, classes and students. The follow-up student register migration adds the fields required by the current student management screen. It does not yet replace every legacy FastAPI route or move existing SQLite records. Do not switch off the old API until the frontend flows have been migrated and tested against Supabase.
 
 ## School registration and verification
 
