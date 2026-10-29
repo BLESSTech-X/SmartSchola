@@ -4,7 +4,8 @@ import PageHeader from '../components/PageHeader.jsx'
 import Modal from '../components/Modal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
-import client from '../api/client.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { listStudents, createStudent, updateStudent, deleteStudent } from '../lib/studentRecords.js'
 import { useToast } from '../context/ToastContext.jsx'
 
 const EMPTY_FORM = { first_name:'', last_name:'', grade:'', class_name:'', date_of_birth:'', gender:'', parent_phone:'', address:'' }
@@ -22,14 +23,23 @@ export default function Students() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const { addToast } = useToast()
+  const { currentUser } = useAuth()
+  const schoolId = currentUser?.school_id
 
   const fetchStudents = useCallback(() => {
     setLoading(true)
-    client.get('/students', { params: { search: search || undefined, page, per_page: 20 } })
-      .then(r => { setStudents(r.data.students); setTotal(r.data.total) })
-      .catch(() => addToast('Failed to load students', 'error'))
+    if (!schoolId) {
+      setStudents([])
+      setTotal(0)
+      setLoading(false)
+      addToast('Your account is not linked to a school. Please sign in again.', 'error')
+      return
+    }
+    listStudents({ schoolId, search, page })
+      .then(result => { setStudents(result.students); setTotal(result.total) })
+      .catch(err => addToast(err.message || 'Failed to load students', 'error'))
       .finally(() => setLoading(false))
-  }, [search, page])
+  }, [search, page, schoolId])
 
   useEffect(() => { fetchStudents() }, [fetchStudents])
 
@@ -47,16 +57,16 @@ export default function Students() {
     setSaving(true)
     try {
       if (editStudent) {
-        await client.put(`/students/${editStudent.id}`, form)
+        await updateStudent({ schoolId, studentId: editStudent.id, form })
         addToast('Student updated successfully', 'success')
       } else {
-        await client.post('/students', form)
+        await createStudent({ schoolId, form })
         addToast('Student added successfully', 'success')
       }
       setModalOpen(false)
       fetchStudents()
     } catch (err) {
-      addToast(err.response?.data?.detail || 'Save failed', 'error')
+      addToast(err.message || 'Save failed', 'error')
     } finally { setSaving(false) }
   }
 
@@ -64,11 +74,11 @@ export default function Students() {
     if (!deleteModal) return
     setDeleting(true)
     try {
-      await client.delete(`/students/${deleteModal.id}`)
+      await deleteStudent({ schoolId, studentId: deleteModal.id })
       addToast('Student removed', 'success')
       setDeleteModal(null)
       fetchStudents()
-    } catch { addToast('Delete failed', 'error') }
+    } catch (err) { addToast(err.message || 'Delete failed', 'error') }
     finally { setDeleting(false) }
   }
 
