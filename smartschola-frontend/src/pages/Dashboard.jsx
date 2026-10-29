@@ -4,24 +4,38 @@ import { Users, Wallet, AlertCircle, MessageSquare, Plus, ClipboardList, LayoutD
 import StatCard from '../components/StatCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import PageHeader from '../components/PageHeader.jsx'
-import client from '../api/client.js'
+import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 
-const formatK = (n) => `K ${(n || 0).toLocaleString('en-ZM', { minimumFractionDigits: 2 })}`
-const formatDate = (d) => d ? new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : ''
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { addToast } = useToast()
+  const { currentUser } = useAuth()
+  const schoolId = currentUser?.school_id
 
   useEffect(() => {
-    client.get('/dashboard/stats')
-      .then(r => setStats(r.data))
-      .catch(() => addToast('Could not load dashboard data', 'error'))
-      .finally(() => setLoading(false))
-  }, [])
+    let active = true
+    if (!schoolId || !supabase) {
+      setStats({ total_students: 0, recent_activity: [] })
+      setLoading(false)
+      if (!schoolId) addToast('Your account is not linked to a school. Please sign in again.', 'error')
+      return () => { active = false }
+    }
+    supabase.from('students').select('id', { count: 'exact', head: true })
+      .eq('school_id', schoolId).eq('status', 'active')
+      .then(({ count, error }) => {
+        if (!active) return
+        if (error) throw error
+        setStats({ total_students: count || 0, recent_activity: [] })
+      })
+      .catch(err => { if (active) addToast(err.message || 'Could not load the school dashboard', 'error') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [schoolId])
 
   const quickActions = [
     { label: 'Add student', detail: 'Create a student profile', icon: Plus, path: '/workspace/students', tone: 'navy' },
@@ -43,9 +57,9 @@ export default function Dashboard() {
 
       <div className="dashboard-stat-grid">
         <StatCard loading={loading} icon={Users} label="Total students" value={stats?.total_students ?? '—'} sub="Currently enrolled" color="#214A82" />
-        <StatCard loading={loading} icon={Wallet} label="Fees collected" value={loading ? '—' : formatK(stats?.fees_collected)} sub="This academic year" color="#16866B" />
-        <StatCard loading={loading} icon={AlertCircle} label="Outstanding fees" value={loading ? '—' : formatK(stats?.fees_outstanding)} sub="Balance to follow up" color="#C65B42" />
-        <StatCard loading={loading} icon={MessageSquare} label="SMS sent today" value={stats?.sms_sent_today ?? '—'} sub="Messages sent" color="#7655B5" />
+        <StatCard loading={loading} icon={Wallet} label="Fees collected" value="Not connected" sub="Fees module migration pending" color="#16866B" />
+        <StatCard loading={loading} icon={AlertCircle} label="Outstanding fees" value="Not connected" sub="Fees module migration pending" color="#C65B42" />
+        <StatCard loading={loading} icon={MessageSquare} label="SMS sent today" value="Not connected" sub="Communications module migration pending" color="#7655B5" />
       </div>
 
       <div className="dashboard-content-grid">
@@ -74,15 +88,7 @@ export default function Dashboard() {
           ) : loading ? (
             <div className="activity-loading"><span/><span/><span/></div>
           ) : (
-            <div className="activity-list">
-              {(stats?.recent_activity || []).map(item => (
-                <div key={item.id} className="activity-item">
-                  <span className="activity-dot"/>
-                  <div className="activity-copy"><p>{item.action}</p>{item.details && <small>{item.details}</small>}</div>
-                  <time>{formatDate(item.created_at)}</time>
-                </div>
-              ))}
-            </div>
+            <EmptyState icon={LayoutDashboard} title="Activity tracking is being connected" description="Recent school actions will appear here when the activity module is migrated to Supabase." />>
           )}
         </section>
       </div>
