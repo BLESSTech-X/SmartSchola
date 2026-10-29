@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Wallet, AlertCircle, MessageSquare, Plus, ClipboardList, LayoutDashboard, ArrowUpRight, CalendarDays, Sparkles, ChevronRight } from 'lucide-react'
+import { Users, BookOpen as BookOpenIcon, Wallet, AlertCircle, MessageSquare, Plus, ClipboardList, LayoutDashboard, ArrowUpRight, CalendarDays, Sparkles, ChevronRight } from 'lucide-react'
 import StatCard from '../components/StatCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import PageHeader from '../components/PageHeader.jsx'
@@ -12,6 +12,7 @@ import { useToast } from '../context/ToastContext.jsx'
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [academicOverview, setAcademicOverview] = useState({ currentYear: null, totalClasses: 0 })
   const navigate = useNavigate()
   const { addToast } = useToast()
   const { currentUser } = useAuth()
@@ -25,12 +26,21 @@ export default function Dashboard() {
       if (!schoolId) addToast('Your account is not linked to a school. Please sign in again.', 'error')
       return () => { active = false }
     }
-    supabase.from('students').select('id', { count: 'exact', head: true })
-      .eq('school_id', schoolId).eq('status', 'active')
-      .then(({ count, error }) => {
+    Promise.all([
+      supabase.from('students').select('id', { count: 'exact', head: true })
+        .eq('school_id', schoolId).eq('status', 'active'),
+      supabase.from('classes').select('id', { count: 'exact', head: true })
+        .eq('school_id', schoolId),
+      supabase.from('academic_years').select('id,name,starts_on,ends_on,is_current')
+        .eq('school_id', schoolId).eq('is_current', true).maybeSingle(),
+    ])
+      .then(([studentsResult, classesResult, yearResult]) => {
         if (!active) return
-        if (error) throw error
-        setStats({ total_students: count || 0, recent_activity: [] })
+        if (studentsResult.error) throw studentsResult.error
+        if (classesResult.error) throw classesResult.error
+        if (yearResult.error) throw yearResult.error
+        setStats({ total_students: studentsResult.count || 0, recent_activity: [] })
+        setAcademicOverview({ currentYear: yearResult.data || null, totalClasses: classesResult.count || 0 })
       })
       .catch(err => { if (active) addToast(err.message || 'Could not load the school dashboard', 'error') })
       .finally(() => { if (active) setLoading(false) })
@@ -61,6 +71,17 @@ export default function Dashboard() {
         <StatCard loading={loading} icon={AlertCircle} label="Outstanding fees" value="Not connected" sub="Fees module migration pending" color="#C65B42" />
         <StatCard loading={loading} icon={MessageSquare} label="SMS sent today" value="Not connected" sub="Communications module migration pending" color="#7655B5" />
       </div>
+
+      <section className="mb-6 grid gap-4 md:grid-cols-2">
+        <button type="button" onClick={() => navigate('/workspace/academic-years')} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:border-amber-200 hover:shadow-md">
+          <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><CalendarDays size={21}/></span><div><p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Current academic year</p><p className="mt-1 font-semibold text-gray-900">{loading ? 'Loading…' : academicOverview.currentYear?.name || 'Not set'}</p><p className="mt-1 text-xs text-gray-500">{academicOverview.currentYear ? [academicOverview.currentYear.starts_on, academicOverview.currentYear.ends_on].filter(Boolean).join(' to ') || 'Dates not set' : 'Set the active school year'}</p></div></div>
+          <ArrowUpRight size={18} className="shrink-0 text-gray-400"/>
+        </button>
+        <button type="button" onClick={() => navigate('/workspace/classes')} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md">
+          <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><BookOpenIcon/></span><div><p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Classes and streams</p><p className="mt-1 font-semibold text-gray-900">{loading ? 'Loading…' : academicOverview.totalClasses}</p><p className="mt-1 text-xs text-gray-500">Manage classes and academic-year assignments</p></div></div>
+          <ArrowUpRight size={18} className="shrink-0 text-gray-400"/>
+        </button>
+      </section>
 
       <div className="dashboard-content-grid">
         <section className="dashboard-panel quick-panel">
