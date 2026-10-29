@@ -6,12 +6,14 @@ import EmptyState from '../components/EmptyState.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { listStudents, createStudent, updateStudent, deleteStudent } from '../lib/studentRecords.js'
+import { listClasses } from '../lib/classRecords.js'
 import { useToast } from '../context/ToastContext.jsx'
 
-const EMPTY_FORM = { first_name:'', last_name:'', grade:'', class_name:'', date_of_birth:'', gender:'', parent_phone:'', address:'' }
+const EMPTY_FORM = { first_name:'', last_name:'', grade:'', class_id:'', class_name:'', date_of_birth:'', gender:'', parent_phone:'', address:'' }
 
 export default function Students() {
   const [students, setStudents] = useState([])
+  const [classes, setClasses] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -43,24 +45,31 @@ export default function Students() {
 
   useEffect(() => { fetchStudents() }, [fetchStudents])
 
+  useEffect(() => {
+    if (!schoolId) return
+    listClasses(schoolId).then(setClasses).catch(err => addToast(err.message || 'Failed to load classes', 'error'))
+  }, [schoolId, addToast])
+
   const openAdd = () => { setEditStudent(null); setForm(EMPTY_FORM); setModalOpen(true) }
   const openEdit = (s) => {
     setEditStudent(s)
-    setForm({ first_name: s.first_name, last_name: s.last_name, grade: s.grade, class_name: s.class_name, date_of_birth: s.date_of_birth||'', gender: s.gender||'', parent_phone: s.parent_phone||'', address: s.address||'' })
+    setForm({ first_name: s.first_name, last_name: s.last_name, grade: s.grade, class_id: s.class_id || '', class_name: s.class_name, date_of_birth: s.date_of_birth||'', gender: s.gender||'', parent_phone: s.parent_phone||'', address: s.address||'' })
     setModalOpen(true)
   }
 
   const handleSave = async () => {
-    if (!form.first_name || !form.last_name || !form.grade || !form.class_name) {
-      addToast('First name, last name, grade, and class are required', 'warning'); return
+    if (!form.first_name.trim() || !form.last_name.trim() || !form.grade || !form.class_id) {
+      addToast('First name, last name, grade, and a class are required', 'warning'); return
     }
+    const selectedClass = classes.find(item => item.id === form.class_id)
+    if (!selectedClass) { addToast('Select a valid class from your school', 'warning'); return }
     setSaving(true)
     try {
       if (editStudent) {
-        await updateStudent({ schoolId, studentId: editStudent.id, form })
+        await updateStudent({ schoolId, studentId: editStudent.id, form: { ...form, class_name: selectedClass.name } })
         addToast('Student updated successfully', 'success')
       } else {
-        await createStudent({ schoolId, form })
+        await createStudent({ schoolId, form: { ...form, class_name: selectedClass.name } })
         addToast('Student added successfully', 'success')
       }
       setModalOpen(false)
@@ -121,7 +130,7 @@ export default function Students() {
               <article className="mobile-student-card" key={s.id}>
                 <div className="mobile-student-card-head">
                   <span className="mobile-student-avatar">{s.first_name?.[0]}{s.last_name?.[0]}</span>
-                  <div className="mobile-student-card-name"><strong>{s.first_name} {s.last_name}</strong><span>Grade {s.grade} · Class {s.class_name}</span></div>
+                  <div className="mobile-student-card-name"><strong>{s.first_name} {s.last_name}</strong><span>Grade {s.grade} · Class {s.classes?.name || s.class_name}</span></div>
                 </div>
                 <div className="mobile-student-details">
                   <div><small>Parent phone</small><span>{s.parent_phone || "Not provided"}</span></div>
@@ -166,7 +175,7 @@ export default function Students() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">Grade {s.grade}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{s.class_name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{s.classes?.name || s.class_name}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{s.parent_phone || '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{s.gender || '—'}</td>
                     <td className="px-4 py-3">
@@ -211,9 +220,12 @@ export default function Students() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Class Name <span className="text-red-400">*</span></label>
-            <input type="text" placeholder="e.g. 7A, 9B" value={form.class_name} onChange={e => setForm(p=>({...p,class_name:e.target.value}))}
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-400" />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Class <span className="text-red-400">*</span></label>
+            <select value={form.class_id} onChange={e => setForm(p=>({...p,class_id:e.target.value}))} required className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-400">
+              <option value="">Select a school class</option>
+              {classes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+            {classes.length === 0 && <p className="text-xs text-amber-600 mt-1">Create a class in the Classes section before registering students.</p>}
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Gender</label>
@@ -241,7 +253,7 @@ export default function Students() {
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-lg text-sm font-semibold text-white flex items-center gap-2 hover:opacity-90 disabled:opacity-60" style={{ background: '#0B1D3A' }}>
+          <button onClick={handleSave} disabled={saving || classes.length === 0} className="px-5 py-2 rounded-lg text-sm font-semibold text-white flex items-center gap-2 hover:opacity-90 disabled:opacity-60" style={{ background: '#0B1D3A' }}>
             {saving && <LoadingSpinner size={14} color="white" />}{saving ? 'Saving...' : editStudent ? 'Save Changes' : 'Add Student'}
           </button>
         </div>
