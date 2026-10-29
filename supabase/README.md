@@ -13,6 +13,10 @@ SmartSchola uses one Supabase PostgreSQL database with tenant isolation enforced
 
 After the initial schema has been applied, run `supabase/migrations/202610300001_student_records.sql` in the Supabase SQL Editor. This adds the register fields used by the frontend (grade, class label, gender, parent phone and address) and a generated student reference. The existing `students` Row Level Security policies continue to scope access to active members of each school.
 
+## Apply the student-to-class integrity migration
+
+After the student register migration, run `supabase/migrations/202610300002_student_class_integrity.sql`. This adds a database guard that rejects assigning a student to a class belonging to another school. Existing student records are preserved; legacy class labels remain visible until each student is assigned to a structured class.
+
 ## Configure the frontend
 
 Set these as GitHub Actions repository **Variables** for the `github-pages` deployment:
@@ -24,7 +28,7 @@ The publishable key is intended for browser use. Never add a Supabase secret key
 
 ## Current migration boundary
 
-The initial migration creates the secure Supabase foundation: Auth-linked profiles, school registration, school memberships, verified public directory, academic years, classes and students. The follow-up student register migration adds the fields required by the current student management screen. It does not yet replace every legacy FastAPI route or move existing SQLite records. Do not switch off the old API until the frontend flows have been migrated and tested against Supabase.
+The initial migration creates the secure Supabase foundation: Auth-linked profiles, school registration, school memberships, verified public directory, academic years, classes and students. The follow-up student register migration adds the fields required by the current student management screen. The class-integrity migration protects student-to-class assignments at the database level. It does not yet replace every legacy FastAPI route or move existing SQLite records. Do not switch off the old API until the frontend flows have been migrated and tested against Supabase.
 
 ## School registration and verification
 
