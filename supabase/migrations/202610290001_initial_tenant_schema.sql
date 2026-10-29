@@ -196,20 +196,22 @@ with check (public.has_school_role(id, array['headmaster','admin']));
 -- can manage memberships. A member cannot grant themselves elevated privileges.
 create policy "memberships_read_school" on public.school_memberships
 for select to authenticated using (public.is_school_member(school_id));
-create policy "memberships_manage_school" on public.school_memberships
-for all to authenticated
-using (public.has_school_role(school_id, array['headmaster','admin']))
-with check (public.has_school_role(school_id, array['headmaster','admin']));
+-- Membership writes are intentionally not granted directly from the browser.
+-- Future invitation/role-change operations must use validated server-side functions.
 
-create policy "academic_years_school_access" on public.academic_years
+create policy "academic_years_school_read" on public.academic_years
+for select to authenticated using (public.is_school_member(school_id));
+create policy "academic_years_staff_write" on public.academic_years
 for all to authenticated
-using (public.is_school_member(school_id))
-with check (public.is_school_member(school_id));
+using (public.has_school_role(school_id, array['headmaster','admin','teacher']))
+with check (public.has_school_role(school_id, array['headmaster','admin','teacher']));
 
-create policy "classes_school_access" on public.classes
+create policy "classes_school_read" on public.classes
+for select to authenticated using (public.is_school_member(school_id));
+create policy "classes_staff_write" on public.classes
 for all to authenticated
-using (public.is_school_member(school_id))
-with check (public.is_school_member(school_id));
+using (public.has_school_role(school_id, array['headmaster','admin','teacher']))
+with check (public.has_school_role(school_id, array['headmaster','admin','teacher']));
 
 create policy "students_school_read" on public.students
 for select to authenticated using (public.is_school_member(school_id));
@@ -223,7 +225,8 @@ revoke all on public.profiles, public.schools, public.school_memberships,
   public.academic_years, public.classes, public.students from anon;
 grant select on public.schools to anon;
 grant select, update on public.profiles to authenticated;
-grant select, update on public.schools to authenticated;
+grant select on public.schools to authenticated;
+grant update (name, location, description, logo_url, cover_url, updated_at) on public.schools to authenticated;
 grant select, insert, update, delete on public.school_memberships,
   public.academic_years, public.classes, public.students to authenticated;
 
