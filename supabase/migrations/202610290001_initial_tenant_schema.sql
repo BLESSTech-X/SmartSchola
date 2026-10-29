@@ -214,7 +214,7 @@ with check (public.is_school_member(school_id));
 create policy "students_school_read" on public.students
 for select to authenticated using (public.is_school_member(school_id));
 create policy "students_staff_write" on public.students
-for insert, update, delete to authenticated
+for all to authenticated
 using (public.has_school_role(school_id, array['headmaster','admin','teacher']))
 with check (public.has_school_role(school_id, array['headmaster','admin','teacher']));
 
