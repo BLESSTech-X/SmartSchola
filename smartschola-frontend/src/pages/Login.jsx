@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck, UserRound, BookOpen, BriefcaseBusiness } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import client from '../api/client.js'
+import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
 
 const roles = [
   { id: 'headmaster', label: 'Headmaster', icon: BriefcaseBusiness, description: 'School leadership and management', identityLabel: 'Headmaster email address', identityPlaceholder: 'name@school.edu.zm', autocomplete: 'username' },
-  { id: 'teacher', label: 'Teacher', icon: BookOpen, description: 'Classes, marks and learner records', identityLabel: 'School-issued staff ID or email', identityPlaceholder: 'Enter your authorised staff ID or email', autocomplete: 'username' },
-  { id: 'student', label: 'Student', icon: GraduationCap, description: 'Learning, results and school updates', identityLabel: 'School-issued student ID', identityPlaceholder: 'Enter the ID given by your school', autocomplete: 'username' },
-  { id: 'parent', label: 'Parent / Guardian', icon: UserRound, description: 'Your child’s updates and reports', identityLabel: 'School-issued family ID or email', identityPlaceholder: 'Enter the ID provided by your school', autocomplete: 'username' },
+  { id: 'teacher', label: 'Teacher', icon: BookOpen, description: 'Classes, marks and learner records', identityLabel: 'School account email address', identityPlaceholder: 'Enter the email registered with your school', autocomplete: 'username' },
+  { id: 'student', label: 'Student', icon: GraduationCap, description: 'Learning, results and school updates', identityLabel: 'Student account email address', identityPlaceholder: 'Enter the email registered with your school', autocomplete: 'username' },
+  { id: 'parent', label: 'Parent / Guardian', icon: UserRound, description: 'Your child’s updates and reports', identityLabel: 'Parent / guardian account email', identityPlaceholder: 'Enter the email registered with your school', autocomplete: 'username' },
 ]
 
 export default function Login() {
@@ -25,16 +25,17 @@ export default function Login() {
   const schoolSlug = searchParams.get('school')
   const selectedRole = roles.find(item => item.id === role) || roles[0]
   const RoleIcon = selectedRole.icon
-  const apiConfigured = Boolean(import.meta.env.VITE_API_URL) || !import.meta.env.PROD
+  const apiConfigured = isSupabaseConfigured
 
   useEffect(() => {
     if (!schoolSlug) return
     let active = true
-    client.get('/schools/public')
-      .then(({ data }) => {
-        const found = Array.isArray(data) ? data.find(item => item.slug === schoolSlug) : null
-        if (active) setSchool(found || null)
-      })
+    if (!isSupabaseConfigured) {
+      setSchoolLoading(false)
+      return () => { active = false }
+    }
+    supabase.from('schools').select('id,name,slug,location').eq('slug', schoolSlug).eq('status', 'verified').maybeSingle()
+      .then(({ data, error }) => { if (active) setSchool(error ? null : data) })
       .catch(() => { if (active) setSchool(null) })
       .finally(() => { if (active) setSchoolLoading(false) })
     return () => { active = false }
@@ -44,26 +45,38 @@ export default function Login() {
     e.preventDefault()
     setError('')
     if (!schoolSlug || !school) {
-      setError('This school is not in the active school directory. Return to the school list and select a registered school.')
+      setError('This school is not in the verified school directory. Return to the school list and select a verified school.')
       return
     }
     if (!apiConfigured) {
-      setError('School sign-in is not connected yet. Please contact SmartSchola support. Do not enter real credentials until access is confirmed.')
+      setError('Supabase sign-in is not configured. Please contact SmartSchola support.')
+      return
+    }
+    if (!form.username.includes('@')) {
+      setError('Use the email address registered to your school account. School-issued ID sign-in will be added through a secure account-linking process.')
       return
     }
     setLoading(true)
     try {
-      const tokenResponse = await client.post('/auth/login', { username: form.username.trim(), password: form.password, role, school_slug: schoolSlug })
-      const accessToken = tokenResponse.data.access_token
-      const profileResponse = await client.get('/auth/me', { headers: { Authorization: `Bearer ${accessToken}` } })
-      const profile = { ...profileResponse.data, school_id: school.id, school_slug: school.slug, school_name: school.name, role }
-      login(accessToken, profile)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: form.username.trim(), password: form.password })
+      if (authError) throw authError
+      const { data: membership, error: membershipError } = await supabase.from('school_memberships')
+        .select('id,school_id,role,status').eq('school_id', school.id).eq('user_id', authData.user.id).eq('status', 'active').maybeSingle()
+      if (membershipError) throw membershipError
+      if (!membership || membership.role !== role) {
+        await supabase.auth.signOut()
+        setError('This account does not have an active ' + selectedRole.label.toLowerCase() + ' membership at ' + school.name + '. Contact your school headmaster.')
+        return
+      }
+      const { data: profile, error: profileError } = await supabase.from('profiles')
+        .select('full_name,phone').eq('id', authData.user.id).maybeSingle()
+      if (profileError) throw profileError
+      const userProfile = { id: authData.user.id, full_name: profile?.full_name || authData.user.email, email: authData.user.email,
+        phone: profile?.phone || '', school_id: school.id, school_slug: school.slug, school_name: school.name, role: membership.role }
+      login(authData.session.access_token, userProfile)
       navigate('/workspace', { replace: true })
     } catch (err) {
-      if (err.response?.status === 423) setError(err.response.data?.detail || 'This school sign-in has been flagged after three failed attempts. Contact SmartSchola support for verification with your headmaster.')
-      else if (err.response?.status === 401) setError(err.response.data?.detail || `Sign-in failed for ${school.name}. Check your school-issued credentials.`)
-      else if (err.response?.data?.detail) setError(err.response.data.detail)
-      else setError('We could not connect to the sign-in service. Please try again later.')
+      setError(err.message || 'Sign-in failed. Check your email and password, then try again.')
     } finally {
       setLoading(false)
     }
@@ -85,7 +98,7 @@ export default function Login() {
             <span><BookOpen size={17}/> Teaching and learning</span>
             <span><UserRound size={17}/> Student and family access</span>
           </div>
-          <div className="login-assurance"><ShieldCheck size={18}/><span><strong>Three-attempt protection.</strong><small>After three failed attempts, contact support. We verify with the headmaster before restoring access.</small></span></div>
+          <div className="login-assurance"><ShieldCheck size={18}/><span><strong>School account protection.</strong><small>Your school role and active membership are checked before workspace access is granted.</small></span></div>
         </div>
         <div className="login-side-footer">Schools. Families. Futures.</div>
       </aside>
@@ -103,14 +116,14 @@ export default function Login() {
           </div>
           <form onSubmit={handleSubmit}>
             <label htmlFor="login-identity">{selectedRole.identityLabel}</label>
-            <input id="login-identity" type={role === 'headmaster' || (role === 'teacher' && form.username.includes('@')) || (role === 'parent' && form.username.includes('@')) ? 'email' : 'text'} autoComplete={selectedRole.autocomplete} required value={form.username} onChange={e => setForm(p => ({...p, username:e.target.value}))} placeholder={selectedRole.identityPlaceholder}/>
+            <input id="login-identity" type="email" autoComplete={selectedRole.autocomplete} required value={form.username} onChange={e => setForm(p => ({...p, username:e.target.value}))} placeholder={selectedRole.identityPlaceholder}/>
             <label htmlFor="login-password">Password</label>
             <div className="login-password-wrap"><input id="login-password" type={showPass ? 'text' : 'password'} autoComplete="current-password" required value={form.password} onChange={e => setForm(p => ({...p,password:e.target.value}))} placeholder="Enter your password"/><button type="button" onClick={() => setShowPass(v=>!v)} aria-label={showPass ? 'Hide password' : 'Show password'}>{showPass ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
             {error && <div role="alert" className="login-error"><ShieldCheck size={17}/><span>{error}</span></div>}
             <button className="login-submit" type="submit" disabled={loading || schoolLoading || !school}>{loading ? 'Checking your school access…' : <><LockKeyhole size={17}/> Continue as {selectedRole.label}</>}</button>
           </form>
-          <div className="login-security-note"><ShieldCheck size={17}/><span>Only your selected school's authorised accounts can sign in here. Three failed attempts flag this school-specific sign-in for verification.</span></div>
-          <p className="login-help">If you are flagged, contact SmartSchola support. We will verify your identity with the headmaster before any reset. Any applicable support fee must be explained before payment; never pay an unverified person.</p>
+          <div className="login-security-note"><ShieldCheck size={17}/><span>Only your selected school's authorised accounts can sign in here. Your school membership is checked before workspace access is granted.</span></div>
+          <p className="login-help">If you cannot access your account, contact your school headmaster for assistance. Never share your password with another person.</p>
         </div>
       </main>
     </div>
