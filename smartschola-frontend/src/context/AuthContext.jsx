@@ -34,6 +34,11 @@ export function AuthProvider({ children }) {
       const session = data.session
       setToken(session?.access_token || null)
       if (session) localStorage.setItem('token', session.access_token)
+      else {
+        setCurrentUser(null)
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
