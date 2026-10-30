@@ -46,13 +46,16 @@ create table if not exists public.assessments (
   constraint assessments_class_school_fk
     foreign key (class_id, school_id)
     references public.classes(id, school_id) on delete cascade,
-  constraint assessments_year_school_fk
-    foreign key (academic_year_id, school_id)
-    references public.academic_years(id, school_id) on delete set null
+  constraint assessments_year_fk
+    foreign key (academic_year_id)
+    references public.academic_years(id) on delete set null
 );
 
 create index if not exists assessments_school_class_date_idx
   on public.assessments (school_id, class_id, assessment_date desc);
+
+create unique index if not exists assessments_id_school_unique
+  on public.assessments (id, school_id);
 
 create table if not exists public.assessment_scores (
   id uuid primary key default gen_random_uuid(),
@@ -77,9 +80,7 @@ create table if not exists public.assessment_scores (
 create index if not exists assessment_scores_school_assessment_idx
   on public.assessment_scores (school_id, assessment_id);
 
--- Composite parent keys used by the tenant-safe foreign keys above.
-create unique index if not exists assessments_id_school_unique
-  on public.assessments (id, school_id);
+-- The assessment composite key is created before assessment_scores references it.
 
 create or replace function public.can_teach_class(target_school uuid, target_class uuid)
 returns boolean
