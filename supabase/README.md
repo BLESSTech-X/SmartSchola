@@ -21,6 +21,12 @@ After the student register migration, run `supabase/migrations/202610300002_stud
 
 After the student-to-class integrity migration, run `supabase/migrations/202610300003_academic_year_rules.sql`. This enforces at most one current academic year per school and prevents invalid date ranges. The Academic Years workspace screen then supports creating, editing, selecting the current year, and deleting unused years. A year assigned to a class cannot be deleted until its classes are reassigned.
 
+## Apply the assessments and mark-entry migration
+
+After the academic-year rules migration, run `supabase/migrations/202610300004_assessments_mark_entry.sql` in the Supabase SQL Editor. It creates class-level teacher assignments, assessments and student score records. The database enforces same-school links, restricts teacher assessment access to assigned classes, validates marks against each assessment's maximum score, and limits score visibility to school administrators, assigned staff and the student's own linked account.
+
+This migration creates the database foundation only. The next frontend step is the teacher-assignment and assessment/mark-entry screens. Headmasters or administrators must assign teachers to classes before those teachers can create assessments or enter marks. Existing students can receive individual portal access later by linking their student record to an authenticated school membership.
+
 ## Configure the frontend
 
 Set these as GitHub Actions repository **Variables** for the `github-pages` deployment:
@@ -32,7 +38,7 @@ The publishable key is intended for browser use. Never add a Supabase secret key
 
 ## Current migration boundary
 
-The initial migration creates the secure Supabase foundation: Auth-linked profiles, school registration, school memberships, verified public directory, academic years, classes and students. Follow-up migrations add student register fields, protect student-to-class assignments, and enforce academic-year integrity. It does not yet replace every legacy FastAPI route or move existing SQLite records. Do not switch off the old API until the frontend flows have been migrated and tested against Supabase.
+The initial migration creates the secure Supabase foundation: Auth-linked profiles, school registration, school memberships, verified public directory, academic years, classes and students. Follow-up migrations add student register fields, protect student-to-class assignments, enforce academic-year integrity, and add class assignments, assessments and protected student scores. It does not yet replace every legacy FastAPI route or move existing SQLite records. Do not switch off the old API until the frontend flows have been migrated and tested against Supabase.
 
 ## School registration and verification
 
