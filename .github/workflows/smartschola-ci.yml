@@ -41,5 +41,5 @@ jobs:
       - name: Install dependencies and build
         working-directory: ${{ matrix.frontend }}
         run: |
-          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm install --no-audit --no-fund
           npm run build
