@@ -251,20 +251,12 @@ with check (
 );
 
 drop policy if exists assessment_scores_read_school on public.assessment_scores;
+drop policy if exists assessment_scores_read_authorized on public.assessment_scores;
 create policy assessment_scores_read_authorized on public.assessment_scores
 for select to authenticated
 using (
   public.has_school_role(school_id, array['headmaster','admin'])
   or public.can_manage_assessment(assessment_id)
-  or exists (
-    select 1
-    from public.students s
-    join public.school_memberships m on m.id = s.membership_id
-    where s.id = assessment_scores.student_id
-      and s.school_id = assessment_scores.school_id
-      and m.user_id = (select auth.uid())
-      and m.status = 'active'
-  )
 );
 
 drop policy if exists assessment_scores_staff_manage on public.assessment_scores;
