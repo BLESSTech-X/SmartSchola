@@ -125,7 +125,7 @@ create or replace function public.validate_assessment_school_links()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $$
 begin
   if new.academic_year_id is not null and not exists (
     select 1 from public.academic_years y
@@ -136,7 +136,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists assessments_school_links_guard on public.assessments;
 create trigger assessments_school_links_guard
