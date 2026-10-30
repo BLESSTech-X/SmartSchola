@@ -120,6 +120,29 @@ revoke all on function public.can_manage_assessment(uuid) from public;
 grant execute on function public.can_teach_class(uuid, uuid) to authenticated;
 grant execute on function public.can_manage_assessment(uuid) to authenticated;
 
+-- Keep the optional academic-year link within the same school.
+create or replace function public.validate_assessment_school_links()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if new.academic_year_id is not null and not exists (
+    select 1 from public.academic_years y
+    where y.id = new.academic_year_id and y.school_id = new.school_id
+  ) then
+    raise exception 'The academic year does not belong to this school'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists assessments_school_links_guard on public.assessments;
+create trigger assessments_school_links_guard
+  before insert or update of school_id, class_id, academic_year_id on public.assessments
+  for each row execute function public.validate_assessment_school_links();
+
 -- Validate a teacher assignment is only granted to an active teacher in this school.
 create or replace function public.validate_class_teacher_assignment()
 returns trigger
@@ -228,9 +251,21 @@ with check (
 );
 
 drop policy if exists assessment_scores_read_school on public.assessment_scores;
-create policy assessment_scores_read_school on public.assessment_scores
+create policy assessment_scores_read_authorized on public.assessment_scores
 for select to authenticated
-using (public.is_school_member(school_id));
+using (
+  public.has_school_role(school_id, array['headmaster','admin'])
+  or public.can_manage_assessment(assessment_id)
+  or exists (
+    select 1
+    from public.students s
+    join public.school_memberships m on m.id = s.membership_id
+    where s.id = assessment_scores.student_id
+      and s.school_id = assessment_scores.school_id
+      and m.user_id = (select auth.uid())
+      and m.status = 'active'
+  )
+);
 
 drop policy if exists assessment_scores_staff_manage on public.assessment_scores;
 create policy assessment_scores_staff_manage on public.assessment_scores
