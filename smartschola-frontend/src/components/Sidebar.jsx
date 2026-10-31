@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, BookOpen, ClipboardList, Award, Wallet, MessageSquare, Settings, LogOut, CalendarDays, GraduationCap, MoreHorizontal, X } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, ClipboardList, Award, Wallet, MessageSquare, Settings, LogOut, CalendarDays, GraduationCap, MoreHorizontal, X, Link2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
 const links = [
   { to: '/workspace', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/workspace/students', icon: Users, label: 'Students' },
+  { to: '/workspace/student-access', icon: Link2, label: 'Student & Parent Access' },
   { to: '/workspace/classes', icon: BookOpen, label: 'Classes' },
   { to: '/workspace/academic-years', icon: CalendarDays, label: 'Academic Years' },
   { to: '/workspace/marks', icon: ClipboardList, label: 'Mark Entry' },
