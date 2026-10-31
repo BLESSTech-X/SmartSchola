@@ -13,6 +13,7 @@ import Students from './pages/Students.jsx'
 import Classes from './pages/Classes.jsx'
 import AcademicYears from './pages/AcademicYears.jsx'
 import MarkEntry from './pages/MarkEntry.jsx'
+import StudentAccess from './pages/StudentAccess.jsx'
 import Results from './pages/Results.jsx'
 import FeeTracker from './pages/FeeTracker.jsx'
 import SMS from './pages/SMS.jsx'
@@ -21,7 +22,7 @@ import Settings from './pages/Settings.jsx'
 function ProtectedLayout() {
   const { isAuthenticated, currentUser } = useAuth()
   const location = useLocation()
-  const routeNames = { '/workspace': 'School overview', '/workspace/students': 'Students & learners', '/workspace/classes': 'Classes & streams', '/workspace/academic-years': 'Academic years', '/workspace/marks': 'Mark entry', '/workspace/results': 'Academic results', '/workspace/fees': 'Fee tracker', '/workspace/sms': 'School communications', '/workspace/settings': 'Workspace settings' }
+  const routeNames = { '/workspace': 'School overview', '/workspace/students': 'Students & learners', '/workspace/classes': 'Classes & streams', '/workspace/academic-years': 'Academic years', '/workspace/marks': 'Mark entry', '/workspace/student-access': 'Student & Parent Access', '/workspace/results': 'Academic results', '/workspace/fees': 'Fee tracker', '/workspace/sms': 'School communications', '/workspace/settings': 'Workspace settings' }
   const pageTitle = routeNames[location.pathname] || 'School workspace'
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return (
@@ -36,6 +37,7 @@ function ProtectedLayout() {
             <Route path="classes" element={<Classes />} />
             <Route path="academic-years" element={<AcademicYears />} />
             <Route path="marks" element={<MarkEntry />} />
+            <Route path="student-access" element={<StudentAccess />} />
             <Route path="results" element={<Results />} />
             <Route path="fees" element={<FeeTracker />} />
             <Route path="sms" element={<SMS />} />
