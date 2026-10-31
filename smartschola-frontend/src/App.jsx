@@ -18,6 +18,7 @@ import Results from './pages/Results.jsx'
 import FeeTracker from './pages/FeeTracker.jsx'
 import SMS from './pages/SMS.jsx'
 import Settings from './pages/Settings.jsx'
+import PlatformAdmin from './pages/PlatformAdmin.jsx'
 
 function ProtectedLayout() {
   const { isAuthenticated, currentUser } = useAuth()
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="/register-school" element={<SchoolRegistration />} />
             <Route path="/login" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/platform-admin" element={<PlatformAdmin />} />
             <Route path="/workspace/*" element={<ProtectedLayout />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
