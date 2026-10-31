@@ -78,7 +78,24 @@ export default function StudentAccess() {
     finally { setSaving(false) }
   }
 
-  const labelAccount = account => account.login_identifier || `Account · ${account.user_id.slice(0, 8)}…`\n\n  const createPortalAccount = async event => {\n    event.preventDefault()\n    if (!canManage || !schoolId) return\n    setInviting(true)\n    try {\n      const { data, error } = await supabase.functions.invoke('provision-portal-account', {\n        body: { school_id: schoolId, full_name: inviteForm.full_name.trim(), email: inviteForm.email.trim(), role: inviteForm.role },\n      })\n      if (error) throw error\n      if (data?.error) throw new Error(data.error)\n      addToast(data?.message || 'Invitation sent successfully.', 'success')\n      setInviteForm({ full_name: '', email: '', role: 'student' })\n      await load()\n    } catch (error) { addToast(error.message || 'Could not invite this account. Check that the invitation service is deployed.', 'error') }\n    finally { setInviting(false) }\n  }
+  const labelAccount = account => account.login_identifier || `Account · ${account.user_id.slice(0, 8)}…`
+
+  const createPortalAccount = async event => {
+    event.preventDefault()
+    if (!canManage || !schoolId) return
+    setInviting(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('provision-portal-account', {
+        body: { school_id: schoolId, full_name: inviteForm.full_name.trim(), email: inviteForm.email.trim(), role: inviteForm.role },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      addToast(data?.message || 'Invitation sent successfully.', 'success')
+      setInviteForm({ full_name: '', email: '', role: 'student' })
+      await load()
+    } catch (error) { addToast(error.message || 'Could not invite this account. Check that the invitation service is deployed.', 'error') }
+    finally { setInviting(false) }
+  }
   const studentName = id => { const s = students.find(row => row.id === id); return s ? `${s.first_name} ${s.last_name} · ${s.student_number}` : 'Student record' }
 
   if (!canManage) return <div className="p-6"><PageHeader title="Student & Parent Access" subtitle="Account linking is restricted to school leadership."/><div className="bg-white border border-amber-200 rounded-2xl p-5 text-sm text-gray-600"><ShieldCheck className="inline mr-2 text-amber-600" size={18}/>Only the headmaster or an administrator can verify student and parent account links.</div></div>
