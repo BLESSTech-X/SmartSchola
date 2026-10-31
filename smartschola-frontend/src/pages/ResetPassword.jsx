@@ -21,7 +21,7 @@ export default function ResetPassword() {
     setBusy(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
-      if (!sessionData.session) throw new Error('This recovery link is invalid or has expired. Request a new password recovery email.')
+      if (!sessionData.session) throw new Error('This invitation or password link is invalid or has expired. Ask your school administrator to send a new invitation.')
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) throw updateError
       setSuccess('Your password has been updated.')
@@ -29,7 +29,7 @@ export default function ResetPassword() {
       setConfirm('')
       window.setTimeout(() => navigate('/school-sign-in', { replace: true }), 1800)
     } catch (err) {
-      setError(err.message || 'This reset link could not be used. Request a new recovery email.')
+      setError(err.message || 'This secure link could not be used. Ask your school administrator for a new invitation or recovery email.')
     } finally {
       setBusy(false)
     }
@@ -37,8 +37,8 @@ export default function ResetPassword() {
 
   return <main className="login-page reset-password-page"><section className="login-form-side"><div className="login-form-card">
     <Link to="/" className="login-mobile-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><strong>SmartSchola</strong></Link>
-    <span className="public-section-kicker">SECURE ACCOUNT RECOVERY</span><h2>Update your login information</h2>
-    <p className="login-intro">Use the one-time reset link sent by SmartSchola support after your school access has been verified.</p>
+    <span className="public-section-kicker">SECURE ACCOUNT SETUP</span><h2>Create or update your password</h2>
+    <p className="login-intro">Use the secure, one-time link sent to your email to set your SmartSchola password.</p>
     
     <form onSubmit={submit}>
       <label htmlFor="new-password">New password</label><input id="new-password" type={show ? 'text' : 'password'} autoComplete="new-password" minLength={10} maxLength={128} required value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 10 characters"/>
@@ -48,7 +48,7 @@ export default function ResetPassword() {
       {success && <div role="status" className="login-security-note"><ShieldCheck size={17}/><span>{success} Returning to school selection…</span></div>}
       <button className="login-submit" type="submit" disabled={busy}>{busy ? 'Updating securely…' : <><LockKeyhole size={17}/> Update password</>}</button>
     </form>
-    <p className="login-help">Use the password recovery link sent to your email. If it has expired, request another recovery email.</p>
+    <p className="login-help">Never share your password. If your invitation has expired, ask your school administrator to send a new one.</p>
     <Link to="/school-sign-in" className="school-signin-back">Return to school selection</Link>
   </div></section></main>
 }
