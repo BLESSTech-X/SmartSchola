@@ -28,3 +28,50 @@ The function uses JWT verification (the Supabase default). It independently veri
 - The invitation creates an active school membership, but student/parent record access remains blocked until the school links the account to the learner record using the secure linking RPCs.
 - The headmaster/admin must verify identity and guardian authority before creating a parent link.
 - If the invitation email is already registered, the function returns an error rather than attaching an existing identity without verification.
+
+
+## Platform Command Centre
+
+The platform-wide administration system is separate from school memberships. Apply
+`supabase/migrations/202610310002_platform_admin_control_plane.sql` before using
+`/platform-admin`.
+
+### Bootstrap the first platform owner
+
+1. Create the intended platform-owner identity through Supabase Authentication (or use
+   an existing trusted Supabase Auth account).
+2. In the Supabase SQL Editor, replace the email below with that exact account email
+   and run this one-time statement:
+
+```sql
+insert into public.platform_admins (user_id, role, status, created_by)
+select id, 'owner', 'active', null
+from auth.users
+where lower(email) = lower('YOUR_PLATFORM_OWNER_EMAIL')
+on conflict (user_id) do update
+set role = 'owner', status = 'active', created_by = null, updated_at = now();
+```
+
+3. Confirm exactly one row was inserted or updated. Do not expose the owner's password
+   or any service-role credentials.
+
+### Deploy platform school controls
+
+From the repository root, run:
+
+```bash
+npx supabase functions deploy platform-admin-control --project-ref gzwlkhdxcptqpqhbuwxd
+```
+
+The function uses the Supabase-provided server-side service-role secret and verifies
+the caller against `platform_admins` on every request. Only active platform owners
+and platform administrators can verify or suspend schools; support accounts are
+read-only. School status changes are written to `platform_admin_audit_logs`.
+
+Open the central console at:
+`https://blesstech-x.github.io/SmartSchola/platform-admin`
+
+Platform-wide metrics are aggregate counts only. This console does not grant
+platform staff direct access to student-level records. Platform administrator
+appointments should be made only by the owner through a controlled server-side
+administration workflow; never grant roles from browser code or user metadata.
