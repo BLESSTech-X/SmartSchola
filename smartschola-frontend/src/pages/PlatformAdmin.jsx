@@ -30,12 +30,12 @@ export default function PlatformAdmin() {
   const [notice, setNotice] = useState('')
 
   const loadAccess = useCallback(async (user) => {
-    if (!user || !supabase) { setSessionUser(null); setGrant(null); setLoading(false); return }
+    if (!user || !supabase) { setSessionUser(null); setGrant(null); setLoading(false); return null }
     setSessionUser(user)
     const { data, error: accessError } = await supabase.from('platform_admins')
       .select('role,status').eq('user_id', user.id).maybeSingle()
     if (accessError) throw accessError
-    if (!data || data.status !== 'active') { setGrant(null); setLoading(false); return }
+    if (!data || data.status !== 'active') { setGrant(null); setLoading(false); setSchools([]); setAudit([]); setMetrics(initialMetrics); return null }
     setGrant(data)
     const [{ data: stats, error: statsError }, { data: schoolRows, error: schoolError }, { data: auditRows, error: auditError }] = await Promise.all([
       supabase.rpc('platform_dashboard_metrics'),
@@ -74,8 +74,8 @@ export default function PlatformAdmin() {
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
       if (signInError) throw signInError
-      await loadAccess(data.user)
-      if (!grant && !data.user) throw new Error('This account is not authorised for platform administration.')
+      const access = await loadAccess(data.user)
+      if (!access) throw new Error('This account is not authorised for platform administration.')
     } catch (err) {
       setError(err.message || 'Platform sign-in failed.')
       await supabase.auth.signOut()
