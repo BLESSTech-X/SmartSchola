@@ -53,7 +53,7 @@ function ProtectedLayout() {
 
 export default function App() {
   return (
-    <BrowserRouter basename="/SmartSchola">
+    <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
           <Routes>
