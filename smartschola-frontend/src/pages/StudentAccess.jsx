@@ -22,6 +22,8 @@ export default function StudentAccess() {
   const [studentId, setStudentId] = useState('')
   const [accountId, setAccountId] = useState('')
   const [relationship, setRelationship] = useState('Parent')
+  const [setupLink, setSetupLink] = useState('')
+  const [creatingLink, setCreatingLink] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -64,6 +66,17 @@ export default function StudentAccess() {
     finally { setSaving(false) }
   }
 
+  const generateSetupLink = async () => {
+    if (!accountId) { addToast('Choose an account first.', 'warning'); return }
+    setCreatingLink(true); setSetupLink('')
+    try {
+      const result = await apiRequest(`/api/school-portal-accounts/${accountId}/reset-link`, { method: 'POST' })
+      setSetupLink(result.url)
+      addToast('One-time password setup link generated.', 'success')
+    } catch (error) { addToast(error.message || 'Could not generate setup link', 'error') }
+    finally { setCreatingLink(false) }
+  }
+
   const labelAccount = account => account.login_identifier || account.email || account.full_name || `Account · ${account.user_id.slice(0, 8)}…`
   const studentName = id => { const s = students.find(row => row.id === id); return s ? `${s.first_name} ${s.last_name} · ${s.student_number}` : 'Student record' }
 
@@ -93,6 +106,8 @@ export default function StudentAccess() {
             <select required value={accountId} onChange={e=>setAccountId(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="">Select existing school account</option>{accounts.filter(a=>!linkedUserIds.includes(a.user_id)).map(a=><option key={a.id} value={a.user_id}>{labelAccount(a)}</option>)}</select>
             {tab==='parent' && <label className="block text-xs font-semibold text-gray-500">Relationship<input value={relationship} onChange={e=>setRelationship(e.target.value)} required minLength={2} maxLength={40} placeholder="Parent, mother, father, guardian" className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"/></label>}
             <button disabled={saving || !studentId || !accountId} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50" style={{background:'#0B1D3A'}}><Link2 size={16}/>{saving?'Saving securely…':tab==='student'?'Link student account':'Verify & link parent'}</button>
+            <button type="button" onClick={generateSetupLink} disabled={creatingLink || !accountId} className="ml-2 px-4 py-2.5 rounded-xl border border-blue-200 text-blue-700 text-sm font-semibold disabled:opacity-50">{creatingLink ? 'Generating link…' : 'Generate password setup link'}</button>
+            {setupLink && <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-900 break-all"><strong className="block mb-1">One-time link · expires in 24 hours</strong>{setupLink}<button type="button" onClick={() => navigator.clipboard?.writeText(setupLink).then(() => addToast('Setup link copied.', 'success'))} className="block mt-2 font-bold underline">Copy setup link</button></div>}
           </form>
           <div className="mt-5 rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-900 leading-relaxed"><ShieldCheck size={15} className="inline mr-1"/>Only active accounts with the matching school role appear here. Verify identity and authority before linking. Parent links are approved immediately by this action.</div>
         </>}
