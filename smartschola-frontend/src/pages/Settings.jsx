@@ -116,7 +116,6 @@ export default function Settings() {
           <Field label="SMS Provider">
             <select className={inp} value={school.sms_provider} onChange={e => setSchool(p=>({...p,sms_provider:e.target.value}))}>
               <option value="africas_talking">Africa's Talking</option>
-              <option value="custom">Custom Gateway</option>
             </select>
           </Field>
           <Field label="Sender ID"><input className={inp} value={school.sms_sender_id} onChange={e => setSchool(p=>({...p,sms_sender_id:e.target.value}))} placeholder="SmartSchola" /></Field>
