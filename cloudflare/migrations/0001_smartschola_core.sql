@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS students (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   UNIQUE(school_id,student_number),
   UNIQUE(id,school_id),
-  FOREIGN KEY(class_id,school_id) REFERENCES classes(id,school_id) ON DELETE SET NULL,
-  FOREIGN KEY(membership_id,school_id) REFERENCES school_memberships(id,school_id) ON DELETE SET NULL
+  FOREIGN KEY(class_id,school_id) REFERENCES classes(id,school_id) ON DELETE RESTRICT,
+  FOREIGN KEY(membership_id,school_id) REFERENCES school_memberships(id,school_id) ON DELETE RESTRICT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS students_membership_unique ON students(membership_id) WHERE membership_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS students_school_class_idx ON students(school_id,class_id);
