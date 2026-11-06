@@ -1,47 +1,32 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { supabase } from '../lib/supabase.js'
+import { apiRequest } from '../lib/api.js'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => {
-    // Clear legacy client-only demo sessions so they cannot bypass API authentication.
-    if (localStorage.getItem('smartschola_demo_mode') === 'true') {
-      localStorage.removeItem('smartschola_demo_mode')
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      return null
-    }
-    return localStorage.getItem('token')
-  })
+  const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [currentUser, setCurrentUser] = useState(() => {
-    if (localStorage.getItem('smartschola_demo_mode') === 'true') return null
     try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
   })
 
   useEffect(() => {
-    if (!supabase) return
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setToken(session?.access_token || null)
-      if (session) localStorage.setItem('token', session.access_token)
-      else {
-        setCurrentUser(null)
+    if (!token) return
+    let active = true
+    apiRequest('/api/auth/me', { token })
+      .then(user => {
+        if (!active) return
+        setCurrentUser(user)
+        localStorage.setItem('user', JSON.stringify(user))
+      })
+      .catch(() => {
+        if (!active) return
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-      }
-    })
-    supabase.auth.getSession().then(({ data }) => {
-      const session = data.session
-      setToken(session?.access_token || null)
-      if (session) localStorage.setItem('token', session.access_token)
-      else {
+        setToken(null)
         setCurrentUser(null)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-      }
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+      })
+    return () => { active = false }
+  }, [token])
 
   const login = useCallback((accessToken, user) => {
     localStorage.setItem('token', accessToken)
@@ -51,19 +36,15 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(() => {
+    const activeToken = localStorage.getItem('token')
+    if (activeToken) apiRequest('/api/auth/logout', { method: 'POST', token: activeToken }).catch(() => {})
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    localStorage.removeItem('smartschola_demo_mode')
-    if (supabase) supabase.auth.signOut()
     setToken(null)
     setCurrentUser(null)
   }, [])
 
-  return (
-    <AuthContext.Provider value={{ token, currentUser, isAuthenticated: Boolean(token && currentUser), login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{ token, currentUser, isAuthenticated: Boolean(token && currentUser), login, logout }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)
