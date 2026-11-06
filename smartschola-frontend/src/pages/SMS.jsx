@@ -58,7 +58,7 @@ export default function SMS() {
         message
       }
       const r = await apiRequest('/api/sms/send', { method: 'POST', body: JSON.stringify(payload) })
-      addToast(`SMS sent to ${r.data.sent_count} recipients. ${r.data.failed_count > 0 ? `${r.data.failed_count} failed.` : ''}`, r.data.failed_count > 0 ? 'warning' : 'success')
+      addToast(`SMS sent to ${r.sent_count} recipients. ${r.failed_count > 0 ? `${r.failed_count} failed.` : ''}`, r.failed_count > 0 ? 'warning' : 'success')
       fetchLogs()
     } catch (err) { addToast(err.message||'Send failed','error') }
     finally { setSending(false) }
