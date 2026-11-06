@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Settings as SettingsIcon, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
-import client from '../api/client.js'
+import { apiRequest } from '../lib/api.js'
 import { useToast } from '../context/ToastContext.jsx'
 
 function Section({ title, children }) {
@@ -39,18 +39,18 @@ export default function Settings() {
 
   useEffect(() => {
     Promise.all([
-      client.get('/settings').catch(() => ({ data: {} })),
-      client.get('/subjects').catch(() => ({ data: [] }))
-    ]).then(([sRes, subRes]) => {
-      if (sRes.data && sRes.data.name !== undefined) setSchool(p => ({ ...p, ...sRes.data }))
-      setSubjects(subRes.data)
-    }).finally(() => setLoading(false))
+      apiRequest('/api/settings'),
+      apiRequest('/api/subjects')
+    ]).then(([schoolData, subjectData]) => {
+      setSchool(p => ({ ...p, ...schoolData }))
+      setSubjects(subjectData.subjects || [])
+    }).catch(err => addToast(err.message || 'Could not load school settings', 'error')).finally(() => setLoading(false))
   }, [])
 
   const saveSchool = async () => {
     setSavingSchool(true)
     try {
-      await client.put('/settings', school)
+      await apiRequest('/api/settings', { method: 'PUT', body: JSON.stringify(school) })
       addToast('School settings saved','success')
     } catch { addToast('Save failed','error') }
     finally { setSavingSchool(false) }
@@ -61,7 +61,7 @@ export default function Settings() {
     if (pw.new_password !== pw.confirm_password) { addToast('Passwords do not match','warning'); return }
     setSavingPw(true)
     try {
-      await client.post('/auth/change-password', pw)
+      await apiRequest('/api/auth/change-password', { method: 'POST', body: JSON.stringify(pw) })
       addToast('Password changed successfully','success')
       setPw({ current_password:'', new_password:'', confirm_password:'' })
     } catch (err) { addToast(err.response?.data?.detail||'Change failed','error') }
@@ -72,8 +72,8 @@ export default function Settings() {
     if (!newSubject.name || !newSubject.code) { addToast('Name and code required','warning'); return }
     setAddingSubject(true)
     try {
-      const r = await client.post('/subjects', newSubject)
-      setSubjects(p => [...p, r.data])
+      const r = await apiRequest('/api/subjects', { method: 'POST', body: JSON.stringify(newSubject) })
+      setSubjects(p => [...p, r.subject])
       setNewSubject({ name:'', code:'' })
       addToast('Subject added','success')
     } catch (err) { addToast(err.response?.data?.detail||'Failed','error') }
@@ -83,7 +83,7 @@ export default function Settings() {
   const deleteSubject = async (id) => {
     if (!confirm('Delete this subject?')) return
     try {
-      await client.delete(`/subjects/${id}`)
+      await apiRequest(`/api/subjects/${id}`, { method: 'DELETE' })
       setSubjects(p => p.filter(s => s.id !== id))
       addToast('Subject removed','success')
     } catch { addToast('Delete failed','error') }
@@ -175,7 +175,7 @@ export default function Settings() {
       <Section title="System Info">
         <div className="space-y-2 text-sm">
           <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-gray-400">Version</span><span className="font-medium">Smart Schola v1.0</span></div>
-          <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-gray-400">Backend URL</span><code className="text-xs bg-gray-100 px-2 py-0.5 rounded">{import.meta.env.VITE_API_URL||'http://localhost:8000'}</code></div>
+          <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-gray-400">Backend URL</span><code className="text-xs bg-gray-100 px-2 py-0.5 rounded">{import.meta.env.VITE_API_URL||'Cloudflare Worker not configured'}</code></div>
           <div className="flex justify-between py-1.5"><span className="text-gray-400">Built for</span><span className="font-medium">Zambian Schools</span></div>
         </div>
       </Section>
