@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
+import { apiRequest } from '../lib/api.js'
 import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, ChevronRight, GraduationCap, HeartHandshake, LockKeyhole, Menu, Search, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
 
 const capabilities = [
@@ -21,10 +21,10 @@ export default function Landing() {
   useEffect(() => { const timer = window.setInterval(() => setHeroSlide(value => (value + 1) % 4), 4800); return () => window.clearInterval(timer) }, [])
   useEffect(() => {
     let active = true
-    if (!isSupabaseConfigured) {
-      setDirectoryError('The live directory is being configured.')
-      setSchoolsLoading(false)
-      return () => { active = false }
+    apiRequest('/api/schools').then(({schools=[]}) => { if (active) setSchools(schools) })
+      .catch(() => { if (active) setDirectoryError('We could not load the live school directory. Please try again later.') })
+      .finally(() => { if (active) setSchoolsLoading(false) })
+    return () => { active = false }
     }
     supabase.from('schools').select('id,name,slug,location,description,logo_url,cover_url')
       .eq('status', 'verified').order('name')
