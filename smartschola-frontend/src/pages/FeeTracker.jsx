@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import Modal from '../components/Modal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
-import client from '../api/client.js'
+import { apiRequest } from '../lib/api.js'
 import { useToast } from '../context/ToastContext.jsx'
 
 const statusBadge = (s) => {
@@ -33,8 +33,8 @@ export default function FeeTracker() {
 
   const fetchFees = useCallback(() => {
     setLoading(true)
-    client.get('/fees', { params: { search: search||undefined, page, per_page:20 } })
-      .then(r => { setFees(r.data.fees); setTotal(r.data.total); setSummary(r.data.summary) })
+    apiRequest(`/api/fees?page=${page}&per_page=20&search=${encodeURIComponent(search)}`)
+      .then(r => { setFees(r.fees || []); setTotal(r.total || 0); setSummary(r.summary || { total_due:0, total_collected:0, outstanding:0 }) })
       .catch(() => addToast('Failed to load fees','error'))
       .finally(() => setLoading(false))
   }, [search, page])
@@ -42,7 +42,7 @@ export default function FeeTracker() {
   useEffect(() => { fetchFees() }, [fetchFees])
 
   useEffect(() => {
-    client.get('/students', { params: { per_page:200 } }).then(r => setAllStudents(r.data.students)).catch(()=>{})
+    apiRequest('/api/students').then(r => setAllStudents(r.students || [])).catch(()=>{})
   }, [])
 
   const filteredStudents = allStudents.filter(s => `${s.first_name} ${s.last_name}`.toLowerCase().includes(studentSearch.toLowerCase())).slice(0, 8)
@@ -59,23 +59,23 @@ export default function FeeTracker() {
     if (!form.student_id || !form.term || !form.amount_due) { addToast('Student, term and amount due are required','warning'); return }
     setSaving(true)
     try {
-      if (editFee) { await client.put(`/fees/${editFee.id}`, form); addToast('Fee updated','success') }
-      else { await client.post('/fees', form); addToast('Fee record added','success') }
+      if (editFee) { await apiRequest(`/api/fees/${editFee.id}`, { method: 'PUT', body: JSON.stringify(form) }); addToast('Fee updated','success') }
+      else { await apiRequest('/api/fees', { method: 'POST', body: JSON.stringify(form) }); addToast('Fee record added','success') }
       setModalOpen(false); fetchFees()
-    } catch (err) { addToast(err.response?.data?.detail||'Save failed','error') }
+    } catch (err) { addToast(err.message||'Save failed','error') }
     finally { setSaving(false) }
   }
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this fee record?')) return
-    try { await client.delete(`/fees/${id}`); addToast('Deleted','success'); fetchFees() }
+    try { await apiRequest(`/api/fees/${id}`, { method: 'DELETE' }); addToast('Deleted','success'); fetchFees() }
     catch { addToast('Delete failed','error') }
   }
 
   const sendReminders = async () => {
     setSendingReminders(true)
     try {
-      const r = await client.post('/fees/send-reminders')
+      const r = await apiRequest('/api/fees/send-reminders', { method: 'POST' })
       addToast(`Reminders sent: ${r.data.sent} delivered, ${r.data.failed} failed`, r.data.failed > 0 ? 'warning' : 'success')
     } catch { addToast('Failed to send reminders','error') }
     finally { setSendingReminders(false) }
