@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, GraduationCap, ShieldCheck } from 'lucide-react'
-import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
+import { apiRequest, apiConfigured } from '../lib/api.js'
 
 const PENDING_KEY = 'smartschola_pending_school_registration'
 const slugify = value => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -12,39 +12,18 @@ export default function SchoolRegistration() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const submitPendingRegistration = async (session) => {
-    const pending = localStorage.getItem(PENDING_KEY)
-    if (!pending || !session) return false
-    const details = JSON.parse(pending)
-    const { error: rpcError } = await supabase.rpc('register_school', {
-      school_name: details.schoolName,
-      school_slug: slugify(details.schoolName),
-      school_location: details.location,
-    })
-    if (rpcError) throw rpcError
-    localStorage.removeItem(PENDING_KEY)
-    setMessage('Your school registration request has been submitted. It is pending verification and will not appear in the public directory until approved.')
-    return true
-  }
 
-  useEffect(() => {
-    if (!supabase) return
-    supabase.auth.getSession().then(async ({ data, error: sessionError }) => {
-      if (sessionError || !data.session) return
-      try { await submitPendingRegistration(data.session) } catch (err) { setError(err.message || 'We could not submit the pending school registration.') }
-    })
-  }, [])
 
   const handleSubmit = async event => {
     event.preventDefault()
     setError('')
     setMessage('')
-    if (!isSupabaseConfigured) {
-      setError('School registration is temporarily unavailable because the platform connection is not configured.')
+    if (!apiConfigured) {
+      setError('School registration is temporarily unavailable because the SmartSchola API is not configured.')
       return
     }
-    if (form.password.length < 8) {
-      setError('Use a password with at least 8 characters.')
+    if (form.password.length < 10) {
+      setError('Use a password with at least 10 characters.')
       return
     }
     const slug = slugify(form.schoolName)
@@ -53,23 +32,19 @@ export default function SchoolRegistration() {
       return
     }
     setLoading(true)
-    const pending = { schoolName: form.schoolName.trim(), location: form.location.trim() }
     try {
-      localStorage.setItem(PENDING_KEY, JSON.stringify(pending))
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: form.email.trim(),
-        password: form.password,
-        options: {
-          data: { full_name: form.fullName.trim() },
-          emailRedirectTo: window.location.origin + '/SmartSchola/register-school',
-        },
+      const account = await apiRequest('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email: form.email.trim(), password: form.password, full_name: form.fullName.trim() }),
+        token: '',
       })
-      if (signUpError) throw signUpError
-      if (data.session) {
-        await submitPendingRegistration(data.session)
-      } else {
-        setMessage('Your account has been created. Check your email and confirm your address, then return to this page to submit the school registration. The school is not listed publicly until it is verified.')
-      }
+      await apiRequest('/api/schools/register', {
+        method: 'POST',
+        token: account.access_token,
+        body: JSON.stringify({ name: form.schoolName.trim(), slug, location: form.location.trim() }),
+      })
+      setMessage('Your headmaster account and school registration have been submitted. The school is pending verification and will appear in the public directory only after approval.')
+      setForm({ schoolName: '', location: '', fullName: '', email: '', password: '' })
     } catch (err) {
       setError(err.message || 'We could not complete registration. Please try again.')
     } finally {
@@ -94,7 +69,7 @@ export default function SchoolRegistration() {
         <div className="school-registration-divider">HEADMASTER ACCOUNT</div>
         <label>Headmaster's full name<input required value={form.fullName} onChange={e => setForm(v => ({ ...v, fullName: e.target.value }))} placeholder="Your full name"/></label>
         <label>Email address<input required type="email" autoComplete="email" value={form.email} onChange={e => setForm(v => ({ ...v, email: e.target.value }))} placeholder="you@example.com"/></label>
-        <label>Create password<input required type="password" minLength={8} autoComplete="new-password" value={form.password} onChange={e => setForm(v => ({ ...v, password: e.target.value }))} placeholder="At least 8 characters"/></label>
+        <label>Create password<input required type="password" minLength={10} autoComplete="new-password" value={form.password} onChange={e => setForm(v => ({ ...v, password: e.target.value }))} placeholder="At least 10 characters"/></label>
         {error && <p className="school-registration-message error" role="alert">{error}</p>}
         {message && <p className="school-registration-message success" role="status">{message}</p>}
         <button className="school-signin-continue school-registration-submit" type="submit" disabled={loading}>{loading ? 'Submitting securely…' : <>Create headmaster account & register school <ArrowRight size={17}/></>}</button>
