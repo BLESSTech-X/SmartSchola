@@ -75,8 +75,11 @@ export default function FeeTracker() {
   const sendReminders = async () => {
     setSendingReminders(true)
     try {
-      const r = await apiRequest('/api/fees/send-reminders', { method: 'POST' })
-      addToast(`Reminders sent: ${r.data.sent} delivered, ${r.data.failed} failed`, r.data.failed > 0 ? 'warning' : 'success')
+      const r = await apiRequest('/api/sms/send', { method: 'POST', body: JSON.stringify({
+        recipients: 'fee_defaulters',
+        message: 'Dear Parent, your child has an outstanding fee balance. Please contact the school to settle the balance. Thank you.'
+      }) })
+      addToast(`Reminders sent: ${r.sent_count} delivered, ${r.failed_count} failed`, r.failed_count > 0 ? 'warning' : 'success')
     } catch { addToast('Failed to send reminders','error') }
     finally { setSendingReminders(false) }
   }
