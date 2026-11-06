@@ -329,3 +329,24 @@ BEGIN SELECT RAISE(ABORT,'Attendance student must belong to the session class an
 CREATE TRIGGER IF NOT EXISTS invoice_payment_validate_insert BEFORE INSERT ON fee_payments
 WHEN NOT EXISTS(SELECT 1 FROM student_invoices i WHERE i.id=NEW.invoice_id AND i.school_id=NEW.school_id AND i.student_id=NEW.student_id)
 BEGIN SELECT RAISE(ABORT,'Payment must match the invoice student and school'); END;
+
+-- Additional cross-tenant guards for financial and timetable records.
+
+CREATE TRIGGER IF NOT EXISTS fee_structure_year_school_insert BEFORE INSERT ON fee_structures
+WHEN NEW.academic_year_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM academic_years y WHERE y.id=NEW.academic_year_id AND y.school_id=NEW.school_id)
+BEGIN SELECT RAISE(ABORT,'Fee structure academic year must belong to the same school'); END;
+CREATE TRIGGER IF NOT EXISTS fee_structure_term_school_insert BEFORE INSERT ON fee_structures
+WHEN NEW.term_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM terms t WHERE t.id=NEW.term_id AND t.school_id=NEW.school_id)
+BEGIN SELECT RAISE(ABORT,'Fee structure term must belong to the same school'); END;
+CREATE TRIGGER IF NOT EXISTS invoice_year_school_insert BEFORE INSERT ON student_invoices
+WHEN NEW.academic_year_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM academic_years y WHERE y.id=NEW.academic_year_id AND y.school_id=NEW.school_id)
+BEGIN SELECT RAISE(ABORT,'Invoice academic year must belong to the same school'); END;
+CREATE TRIGGER IF NOT EXISTS invoice_term_school_insert BEFORE INSERT ON student_invoices
+WHEN NEW.term_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM terms t WHERE t.id=NEW.term_id AND t.school_id=NEW.school_id)
+BEGIN SELECT RAISE(ABORT,'Invoice term must belong to the same school'); END;
+CREATE TRIGGER IF NOT EXISTS timetable_subject_school_insert BEFORE INSERT ON timetable_entries
+WHEN NEW.subject_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM subjects s WHERE s.id=NEW.subject_id AND s.school_id=NEW.school_id)
+BEGIN SELECT RAISE(ABORT,'Timetable subject must belong to the same school'); END;
+CREATE TRIGGER IF NOT EXISTS timetable_teacher_school_insert BEFORE INSERT ON timetable_entries
+WHEN NEW.teacher_membership_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM school_memberships m WHERE m.id=NEW.teacher_membership_id AND m.school_id=NEW.school_id AND m.role='teacher' AND m.status='active')
+BEGIN SELECT RAISE(ABORT,'Timetable teacher must be active in the same school'); END;
