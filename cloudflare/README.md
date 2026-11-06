@@ -1,12 +1,13 @@
 # SmartSchola Cloudflare migration
 
-This introduces the Cloudflare D1 + Workers + R2 replacement foundation. It intentionally does not delete Supabase or the legacy FastAPI service. Keep both available until the remaining frontend and API routes have been migrated and cutover tests pass.
+This introduces the Cloudflare D1 + Workers replacement foundation. It intentionally does not delete Supabase or the legacy FastAPI service. Keep both available until the remaining frontend and API routes have been migrated and cutover tests pass.
 
 ## What is included
 
 - `migrations/0001_smartschola_core.sql`: D1 schema carrying the existing tenant model: users/profiles, schools, memberships, sessions, login throttling, reset-token records, academic years, classes, students, class-teacher assignments, assessments, scores, guardian links, student account links, parent/student links, platform admins and audit logs.
 - `src/index.js`: Cloudflare Worker API foundation: health, verified school directory, account registration, school-scoped login, session validation/logout, pending school registration and aggregate platform metrics.
-- `wrangler.toml`: D1 and R2 bindings.
+- `migrations/0003_school_operations.sql`: terms, subjects, attendance, fees, invoices, payments, announcements, events, notifications, audit events, school settings, timetable, admissions and subscription records.
+- `wrangler.toml`: D1 binding only; object storage is deliberately deferred.
 
 **This is not yet a drop-in replacement for every Supabase query/RPC or every legacy FastAPI route.** Do not change the production frontend API URL or disable Supabase until the remaining routes and screens are ported and verified.
 
@@ -17,8 +18,7 @@ Run from the repository root:
 ```bash
 npm install -g wrangler
 wrangler login
-wrangler d1 create smartschola-core
-wrangler r2 bucket create smartschola-files
+# The existing smartschola-core database is already configured in wrangler.toml.
 ```
 
 Copy the returned D1 `database_id` into `cloudflare/wrangler.toml`. Set `ALLOWED_ORIGINS` to the exact production frontend origin(s), comma-separated. Never use a wildcard with credentialed requests.
@@ -45,7 +45,7 @@ The SQL file is SQLite/D1 SQL. Do not paste it into Supabase SQL Editor.
 wrangler deploy
 ```
 
-The Worker is configured with an R2 binding named `SCHOOL_FILES`; R2 upload/download API routes still need to be implemented with authenticated school/object ownership checks. Never expose R2 credentials in the browser.
+File/object uploads are not enabled in this phase. Do not configure an R2 binding or expose public upload URLs. For now, store only approved external media URLs or defer uploads until an affordable storage option is selected.
 
 ## 4. Bootstrap the platform owner
 
@@ -84,7 +84,7 @@ Supabase Auth password hashes are not compatible with the Worker's PBKDF2 format
 
 ## 7. Required before full cutover
 
-1. Port all frontend Supabase calls/RPCs: school registration/profile, membership approvals, school verification/suspension, student CRUD, classes, academic years, assessments, marks, student/parent linking, portal access and platform admin controls.
+1. Implement and test Worker endpoints for every new table/module in `0003_school_operations.sql` and port all frontend Supabase calls/RPCs: school registration/profile, membership approvals, school verification/suspension, student CRUD, classes, academic years, assessments, marks, student/parent linking, portal access and platform admin controls.
 2. Port legacy FastAPI features still used: fees, reports, SMS, dashboard, settings and account recovery.
 3. Implement SMTP/email recovery and authenticated R2 upload/download routes.
 4. Add automated tenant-isolation and role tests, including student/parent privacy and score validation.
