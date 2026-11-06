@@ -21,22 +21,12 @@ export default function Landing() {
   useEffect(() => { const timer = window.setInterval(() => setHeroSlide(value => (value + 1) % 4), 4800); return () => window.clearInterval(timer) }, [])
   useEffect(() => {
     let active = true
-    apiRequest('/api/schools').then(({schools=[]}) => { if (active) setSchools(schools) })
-      .catch(() => { if (active) setDirectoryError('We could not load the live school directory. Please try again later.') })
-      .finally(() => { if (active) setSchoolsLoading(false) })
-    return () => { active = false }
-    }
-    supabase.from('schools').select('id,name,slug,location,description,logo_url,cover_url')
-      .eq('status', 'verified').order('name')
-      .then(({ data, error }) => {
-        if (!active) return
-        if (error) setDirectoryError('We could not load the live school directory. Please try again later.')
-        else setSchools(data || [])
-      })
+    apiRequest('/api/schools').then(({ schools = [] }) => { if (active) setSchools(schools) })
       .catch(() => { if (active) setDirectoryError('We could not load the live school directory. Please try again later.') })
       .finally(() => { if (active) setSchoolsLoading(false) })
     return () => { active = false }
   }, [])
+
   const filtered = useMemo(() => schools.filter(s => `${s.name} ${s.location || ''}`.toLowerCase().includes(query.toLowerCase())), [schools, query])
 
   return (
