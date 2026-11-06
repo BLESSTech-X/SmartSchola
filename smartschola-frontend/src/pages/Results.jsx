@@ -3,7 +3,7 @@ import { Award, Search, Download } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
-import client from '../api/client.js'
+import { apiRequest } from '../lib/api.js'
 import { useToast } from '../context/ToastContext.jsx'
 
 const getECZGrade = (s) => {
@@ -37,7 +37,7 @@ export default function Results() {
   const { addToast } = useToast()
 
   useEffect(() => {
-    client.get('/students', { params: { per_page: 200 } }).then(r => setAllStudents(r.data.students)).catch(()=>{})
+    apiRequest('/api/students').then(r => setAllStudents(r.students || [])).catch(()=>{})
   }, [])
 
   useEffect(() => {
@@ -56,26 +56,19 @@ export default function Results() {
   const loadMarks = async (id) => {
     setLoadingMarks(true)
     try {
-      const r = await client.get(`/marks/${id}`, { params: { term: parseInt(term), year: parseInt(year) } })
-      setMarks(r.data)
+      const r = await apiRequest(`/api/students/${id}/results?term=${encodeURIComponent(term)}&year=${encodeURIComponent(year)}`)
+      setMarks(r.marks || [])
     } catch { addToast('Failed to load marks', 'error') }
     finally { setLoadingMarks(false) }
   }
 
   const downloadPDF = async () => {
-    if (!selected) return
+    if (!selected || !marks.length) return
     setDownloading(true)
     try {
-      const r = await client.get(`/reports/student/${selected.id}/pdf`, {
-        params: { term, year }, responseType: 'blob'
-      })
-      const url = URL.createObjectURL(new Blob([r.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url; a.download = `report_${selected.first_name}_${selected.last_name}.pdf`; a.click()
-      URL.revokeObjectURL(url)
-      addToast('PDF downloaded', 'success')
-    } catch { addToast('PDF generation failed', 'error') }
-    finally { setDownloading(false) }
+      window.print()
+      addToast('Choose “Save as PDF” in the print dialog.', 'success')
+    } finally { setDownloading(false) }
   }
 
   const totalScore = marks.reduce((s, m) => s + m.score, 0)
