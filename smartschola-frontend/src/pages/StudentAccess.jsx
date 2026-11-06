@@ -24,6 +24,8 @@ export default function StudentAccess() {
   const [relationship, setRelationship] = useState('Parent')
   const [setupLink, setSetupLink] = useState('')
   const [creatingLink, setCreatingLink] = useState(false)
+  const [inviteForm, setInviteForm] = useState({ full_name: '', email: '', role: 'student' })
+  const [inviting, setInviting] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -66,6 +68,19 @@ export default function StudentAccess() {
     finally { setSaving(false) }
   }
 
+  const createPortalAccount = async event => {
+    event.preventDefault()
+    setInviting(true); setSetupLink('')
+    try {
+      const result = await apiRequest('/api/school-portal-accounts', { method: 'POST', body: JSON.stringify(inviteForm) })
+      setSetupLink(result.setup_url)
+      setInviteForm({ full_name: '', email: '', role: 'student' })
+      addToast('Portal account created. Share its one-time setup link with the account holder.', 'success')
+      await load()
+    } catch (error) { addToast(error.message || 'Could not create portal account', 'error') }
+    finally { setInviting(false) }
+  }
+
   const generateSetupLink = async () => {
     if (!accountId) { addToast('Choose an account first.', 'warning'); return }
     setCreatingLink(true); setSetupLink('')
@@ -88,6 +103,16 @@ export default function StudentAccess() {
       <div className="bg-white rounded-2xl border border-gray-100 p-4"><div className="text-xs text-gray-500">Active learner records</div><div className="text-2xl font-bold text-slate-900 mt-1">{students.length}</div></div>
       <div className="bg-white rounded-2xl border border-gray-100 p-4"><div className="text-xs text-gray-500">Linked student accounts</div><div className="text-2xl font-bold text-slate-900 mt-1">{studentLinks.length}</div></div>
       <div className="bg-white rounded-2xl border border-gray-100 p-4"><div className="text-xs text-gray-500">Verified parent links</div><div className="text-2xl font-bold text-slate-900 mt-1">{parentLinks.filter(l => l.status === 'approved').length}</div></div>
+    </div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+      <div className="flex items-start gap-3 mb-4"><div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center"><UserRound size={20}/></div><div><h2 className="font-bold text-slate-900">Create a student or parent account</h2><p className="text-sm text-gray-500 mt-1">Create the account in D1, then share its one-time password setup link. No email service is required.</p></div></div>
+      <form onSubmit={createPortalAccount} className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+        <label className="text-xs font-semibold text-gray-600">Full name<input required maxLength={160} value={inviteForm.full_name} onChange={e=>setInviteForm(v=>({...v,full_name:e.target.value}))} placeholder="Student or parent full name" className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-normal"/></label>
+        <label className="text-xs font-semibold text-gray-600">Email address<input required type="email" maxLength={254} value={inviteForm.email} onChange={e=>setInviteForm(v=>({...v,email:e.target.value}))} placeholder="person@example.com" className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-normal"/></label>
+        <label className="text-xs font-semibold text-gray-600">Account type<select value={inviteForm.role} onChange={e=>setInviteForm(v=>({...v,role:e.target.value}))} className="mt-1 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-normal"><option value="student">Student</option><option value="parent">Parent / guardian</option></select></label>
+        <div className="flex items-end"><button disabled={inviting || !inviteForm.full_name.trim() || !inviteForm.email.trim()} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50" style={{background:'#0B1D3A'}}>{inviting?'Creating account…':'Create account & setup link'}</button></div>
+      </form>
+      {setupLink && <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-900 break-all"><strong className="block mb-1">One-time setup link · expires in 24 hours</strong>{setupLink}<button type="button" onClick={() => navigator.clipboard?.writeText(setupLink).then(() => addToast('Setup link copied.', 'success'))} className="block mt-2 font-bold underline">Copy setup link</button></div>}
     </div>
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-4 border-b border-gray-100 flex flex-wrap gap-2">
