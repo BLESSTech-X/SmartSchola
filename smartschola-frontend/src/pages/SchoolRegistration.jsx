@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, GraduationCap, ShieldCheck } from 'lucide-react'
 import { apiRequest, apiConfigured } from '../lib/api.js'
 
-const PENDING_KEY = 'smartschola_pending_school_registration'
 const slugify = value => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 export default function SchoolRegistration() {
@@ -11,7 +10,6 @@ export default function SchoolRegistration() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
 
 
   const handleSubmit = async event => {
