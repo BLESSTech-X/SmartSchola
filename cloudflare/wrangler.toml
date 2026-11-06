@@ -1,0 +1,13 @@
+name = "smartschola-api"
+main = "src/index.js"
+compatibility_date = "2026-11-06"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "smartschola-core"
+database_id = "b50110fd-6def-4b5c-ab34-0a797cfcc961"
+migrations_dir = "migrations"
+
+[vars]
+ALLOWED_ORIGINS = "https://blesstech-x.github.io,http://localhost:5173"
+APP_ORIGIN = "https://blesstech-x.github.io/SmartSchola"

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Settings as SettingsIcon, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Settings as SettingsIcon, Plus, Trash2 } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
-import client from '../api/client.js'
+import { apiRequest } from '../lib/api.js'
 import { useToast } from '../context/ToastContext.jsx'
 
 function Section({ title, children }) {
@@ -26,11 +26,10 @@ function Field({ label, children }) {
 const inp = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-400"
 
 export default function Settings() {
-  const [school, setSchool] = useState({ name:'', address:'', headmaster_name:'', phone:'', email:'', sms_provider:'africas_talking', sms_api_key:'', sms_username:'', sms_sender_id:'SmartSchola' })
+  const [school, setSchool] = useState({ name:'', address:'', headmaster_name:'', phone:'', email:'', sms_provider:'africas_talking', sms_sender_id:'SmartSchola' })
   const [subjects, setSubjects] = useState([])
   const [newSubject, setNewSubject] = useState({ name:'', code:'' })
   const [pw, setPw] = useState({ current_password:'', new_password:'', confirm_password:'' })
-  const [showKey, setShowKey] = useState(false)
   const [loading, setLoading] = useState(true)
   const [savingSchool, setSavingSchool] = useState(false)
   const [savingPw, setSavingPw] = useState(false)
@@ -39,18 +38,18 @@ export default function Settings() {
 
   useEffect(() => {
     Promise.all([
-      client.get('/settings').catch(() => ({ data: {} })),
-      client.get('/subjects').catch(() => ({ data: [] }))
-    ]).then(([sRes, subRes]) => {
-      if (sRes.data && sRes.data.name !== undefined) setSchool(p => ({ ...p, ...sRes.data }))
-      setSubjects(subRes.data)
-    }).finally(() => setLoading(false))
+      apiRequest('/api/settings'),
+      apiRequest('/api/subjects')
+    ]).then(([schoolData, subjectData]) => {
+      setSchool(p => ({ ...p, ...schoolData }))
+      setSubjects(subjectData.subjects || [])
+    }).catch(err => addToast(err.message || 'Could not load school settings', 'error')).finally(() => setLoading(false))
   }, [])
 
   const saveSchool = async () => {
     setSavingSchool(true)
     try {
-      await client.put('/settings', school)
+      await apiRequest('/api/settings', { method: 'PUT', body: JSON.stringify(school) })
       addToast('School settings saved','success')
     } catch { addToast('Save failed','error') }
     finally { setSavingSchool(false) }
@@ -61,7 +60,7 @@ export default function Settings() {
     if (pw.new_password !== pw.confirm_password) { addToast('Passwords do not match','warning'); return }
     setSavingPw(true)
     try {
-      await client.post('/auth/change-password', pw)
+      await apiRequest('/api/auth/change-password', { method: 'POST', body: JSON.stringify(pw) })
       addToast('Password changed successfully','success')
       setPw({ current_password:'', new_password:'', confirm_password:'' })
     } catch (err) { addToast(err.response?.data?.detail||'Change failed','error') }
@@ -72,8 +71,8 @@ export default function Settings() {
     if (!newSubject.name || !newSubject.code) { addToast('Name and code required','warning'); return }
     setAddingSubject(true)
     try {
-      const r = await client.post('/subjects', newSubject)
-      setSubjects(p => [...p, r.data])
+      const r = await apiRequest('/api/subjects', { method: 'POST', body: JSON.stringify(newSubject) })
+      setSubjects(p => [...p, r.subject])
       setNewSubject({ name:'', code:'' })
       addToast('Subject added','success')
     } catch (err) { addToast(err.response?.data?.detail||'Failed','error') }
@@ -83,7 +82,7 @@ export default function Settings() {
   const deleteSubject = async (id) => {
     if (!confirm('Delete this subject?')) return
     try {
-      await client.delete(`/subjects/${id}`)
+      await apiRequest(`/api/subjects/${id}`, { method: 'DELETE' })
       setSubjects(p => p.filter(s => s.id !== id))
       addToast('Subject removed','success')
     } catch { addToast('Delete failed','error') }
@@ -117,21 +116,14 @@ export default function Settings() {
           <Field label="SMS Provider">
             <select className={inp} value={school.sms_provider} onChange={e => setSchool(p=>({...p,sms_provider:e.target.value}))}>
               <option value="africas_talking">Africa's Talking</option>
-              <option value="custom">Custom Gateway</option>
             </select>
           </Field>
           <Field label="Sender ID"><input className={inp} value={school.sms_sender_id} onChange={e => setSchool(p=>({...p,sms_sender_id:e.target.value}))} placeholder="SmartSchola" /></Field>
-          <Field label="API Username"><input className={inp} value={school.sms_username} onChange={e => setSchool(p=>({...p,sms_username:e.target.value}))} /></Field>
-          <Field label="API Key">
-            <div className="relative">
-              <input className={inp + ' pr-10'} type={showKey?'text':'password'} value={school.sms_api_key} onChange={e => setSchool(p=>({...p,sms_api_key:e.target.value}))} placeholder="Your API key" />
-              <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </Field>
+          <div className="col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-900 leading-relaxed">
+            Provider credentials are stored securely as Cloudflare Worker secrets, not in school settings or the browser. Configure <strong>AT_API_KEY</strong> and <strong>AT_USERNAME</strong> in the Cloudflare Worker environment to enable SMS delivery.
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-3">💡 No API key? SMS will be logged to <code>sms_log.txt</code> on the server for testing.</p>
+        <p className="text-xs text-gray-400 mt-3">SMS messages and delivery results are recorded in Cloudflare D1.</p>
         <button onClick={saveSchool} disabled={savingSchool} className="mt-4 px-5 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center gap-2 hover:opacity-90 disabled:opacity-60" style={{ background:'#0B1D3A' }}>
           {savingSchool && <LoadingSpinner size={14} color="white" />}Save SMS Settings
         </button>
@@ -175,7 +167,7 @@ export default function Settings() {
       <Section title="System Info">
         <div className="space-y-2 text-sm">
           <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-gray-400">Version</span><span className="font-medium">Smart Schola v1.0</span></div>
-          <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-gray-400">Backend URL</span><code className="text-xs bg-gray-100 px-2 py-0.5 rounded">{import.meta.env.VITE_API_URL||'http://localhost:8000'}</code></div>
+          <div className="flex justify-between py-1.5 border-b border-gray-50"><span className="text-gray-400">Backend URL</span><code className="text-xs bg-gray-100 px-2 py-0.5 rounded">{import.meta.env.VITE_API_URL||'Cloudflare Worker not configured'}</code></div>
           <div className="flex justify-between py-1.5"><span className="text-gray-400">Built for</span><span className="font-medium">Zambian Schools</span></div>
         </div>
       </Section>

@@ -1,61 +1,30 @@
-# Smart Schola — Frontend
+# SmartSchola frontend
 
-## Quick Start (Windows Command Prompt)
+This is the active React application. It communicates only with the Cloudflare Worker API and stores its application data in Cloudflare D1.
 
-```cmd
+## Local development
+
+```bash
 cd smartschola-frontend
 npm install
-copy .env.example .env
-```
-
-Edit `.env`:
-```
-VITE_API_URL=http://localhost:8000
-```
-
-```cmd
+cp .env.example .env
 npm run dev
 ```
-Open: http://localhost:5173
 
----
+Set `VITE_API_URL` in `.env` to the local or deployed Cloudflare Worker URL. Do not configure Supabase or a legacy FastAPI/Vercel backend.
 
-## Build for Production
-```cmd
+## Build
+
+```bash
 npm run build
 ```
-Output is in the `dist/` folder.
 
----
+## Deployment configuration
 
-## Deploy to Vercel
+Set `VITE_API_URL` to the Cloudflare Worker URL in the frontend hosting environment. Configure the matching frontend origin in the Worker `ALLOWED_ORIGINS` variable.
 
-```cmd
-npm install -g vercel
-vercel login
-vercel --prod
-```
+## Application modules
 
-In Vercel Dashboard → Project → Settings → Environment Variables:
-```
-VITE_API_URL = https://your-backend.vercel.app
-```
+The application uses Cloudflare Worker endpoints for authentication, school directory, students, classes, academic years, assessments and scores, attendance, school settings, fees, results, platform administration, student/parent account linking and SMS logs/delivery.
 
-Redeploy:
-```cmd
-vercel --prod
-```
-
----
-
-## Features
-- Dashboard with live stats
-- Student management (add, edit, delete)
-- Bulk mark entry with ECZ auto-grading
-- Result viewer with PDF download
-- Fee tracker with payment recording
-- SMS center (all parents, defaulters, class, custom)
-- Settings (school info, subjects, SMS, password)
-
-## Login
-Default: admin / schola2024
+SMS sending requires Africa's Talking credentials configured as Cloudflare Worker secrets. File uploads and automated email delivery are not enabled yet.

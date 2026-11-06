@@ -1,45 +1,42 @@
-name: SmartSchola CI
+name: SmartSchola Cloudflare CI
 
 on:
   push:
-    branches: [main, "hardening/**"]
+    branches: [main, cloudflare-migration]
   pull_request:
     branches: [main]
 
 jobs:
-  backend:
+  cloudflare-worker:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install backend and test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements-dev.txt
-      - name: Compile backend modules
-        working-directory: backend
-        run: python -m compileall -q .
-      - name: Run contract tests
-        env:
-          ENVIRONMENT: test
-          DATABASE_URL: sqlite:///./smartschola-ci.db
-        run: pytest -q
-
-  frontend-builds:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        frontend: [frontend, smartschola-frontend]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Install dependencies and build
-        working-directory: ${{ matrix.frontend }}
+      - name: Check Worker JavaScript syntax
+        run: node --check cloudflare/src/index.js
+      - name: Check migration files are present
         run: |
-          npm install --no-audit --no-fund
-          npm run build
+          test -f cloudflare/migrations/0001_smartschola_core.sql
+          test -f cloudflare/migrations/0002_tenant_integrity_guards.sql
+          test -f cloudflare/migrations/0003_school_operations.sql
+          test -f cloudflare/migrations/0004_settings_and_messaging.sql
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: smartschola-frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: smartschola-frontend
+        run: npm ci --no-audit --no-fund
+      - name: Build frontend
+        working-directory: smartschola-frontend
+        env:
+          VITE_API_URL: https://smartschola-api.invalid
+        run: npm run build

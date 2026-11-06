@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GraduationCap, LockKeyhole, ShieldCheck } from 'lucide-react'
-import { supabase } from '../lib/supabase.js'
+import { apiRequest } from '../lib/api.js'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -11,6 +11,7 @@ export default function ResetPassword() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   async function submit(event) {
     event.preventDefault()
@@ -20,16 +21,15 @@ export default function ResetPassword() {
     if (password !== confirm) return setError('The passwords do not match.')
     setBusy(true)
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      if (!sessionData.session) throw new Error('This invitation or password link is invalid or has expired. Ask your school administrator to send a new invitation.')
-      const { error: updateError } = await supabase.auth.updateUser({ password })
-      if (updateError) throw updateError
+      const token = searchParams.get('token')
+      if (!token) throw new Error('This password setup link is missing its security token. Ask your school administrator for a new link.')
+      await apiRequest('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) })
       setSuccess('Your password has been updated.')
       setPassword('')
       setConfirm('')
       window.setTimeout(() => navigate('/school-sign-in', { replace: true }), 1800)
     } catch (err) {
-      setError(err.message || 'This secure link could not be used. Ask your school administrator for a new invitation or recovery email.')
+      setError(err.message || 'This secure link could not be used. Ask your school administrator for a new one-time setup link.')
     } finally {
       setBusy(false)
     }
@@ -38,7 +38,7 @@ export default function ResetPassword() {
   return <main className="login-page reset-password-page"><section className="login-form-side"><div className="login-form-card">
     <Link to="/" className="login-mobile-brand"><span className="public-brand-mark"><GraduationCap size={22}/></span><strong>SmartSchola</strong></Link>
     <span className="public-section-kicker">SECURE ACCOUNT SETUP</span><h2>Create or update your password</h2>
-    <p className="login-intro">Use the secure, one-time link sent to your email to set your SmartSchola password.</p>
+    <p className="login-intro">Use the secure, one-time password setup link provided by your school administrator.</p>
     
     <form onSubmit={submit}>
       <label htmlFor="new-password">New password</label><input id="new-password" type={show ? 'text' : 'password'} autoComplete="new-password" minLength={10} maxLength={128} required value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 10 characters"/>

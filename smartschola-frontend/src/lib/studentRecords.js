@@ -1,61 +1,40 @@
-import { supabase } from './supabase.js'
+import { apiRequest } from './api.js'
 
 const PAGE_SIZE = 20
-const FIELDS = 'id,school_id,student_number,first_name,last_name,grade,class_name,class_id,date_of_birth,gender,parent_phone,address,status,created_at,classes(id,name)'
-
-function requireSchoolId(schoolId) {
-  if (!schoolId) throw new Error('Your account is not linked to a school. Sign out and sign in through your school directory.')
-  if (!supabase) throw new Error('SmartSchola is not connected to Supabase. Please try again later.')
-}
-
 function cleanStudent(form) {
   return {
-    first_name: form.first_name.trim(),
-    last_name: form.last_name.trim(),
-    grade: String(form.grade).trim(),
+    first_name: String(form.first_name || '').trim(),
+    last_name: String(form.last_name || '').trim(),
+    grade: String(form.grade || '').trim(),
     class_id: form.class_id || null,
-    class_name: form.class_name.trim(),
+    class_name: String(form.class_name || '').trim(),
     date_of_birth: form.date_of_birth || null,
     gender: form.gender || null,
-    parent_phone: form.parent_phone.trim() || null,
-    address: form.address.trim() || null,
+    parent_phone: String(form.parent_phone || '').trim(),
+    address: String(form.address || '').trim(),
   }
 }
-
+function requireSchool(schoolId) {
+  if (!schoolId) throw new Error('Your account is not linked to a school. Sign in through your school directory.')
+}
 export async function listStudents({ schoolId, search = '', page = 1 }) {
-  requireSchoolId(schoolId)
-  const from = (page - 1) * PAGE_SIZE
-  let query = supabase.from('students').select(FIELDS, { count: 'exact' })
-    .eq('school_id', schoolId).eq('status', 'active')
-    .order('last_name', { ascending: true }).order('first_name', { ascending: true })
-    .range(from, from + PAGE_SIZE - 1)
-  const term = search.trim().replace(/[,%()]/g, ' ')
-  if (term) query = query.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,student_number.ilike.%${term}%,class_name.ilike.%${term}%`)
-  const { data, error, count } = await query
-  if (error) throw error
-  return { students: data || [], total: count || 0 }
+  requireSchool(schoolId)
+  const result = await apiRequest('/api/students')
+  const term = search.trim().toLowerCase()
+  const rows = (result.students || []).filter(s => s.status === 'active' && (!term || [s.first_name,s.last_name,s.student_number,s.class_name].some(v => String(v || '').toLowerCase().includes(term))))
+  rows.sort((a,b) => String(a.last_name).localeCompare(String(b.last_name)) || String(a.first_name).localeCompare(String(b.first_name)))
+  const from = (Math.max(1,page)-1)*PAGE_SIZE
+  return { students: rows.slice(from,from+PAGE_SIZE), total: rows.length }
 }
-
 export async function createStudent({ schoolId, form }) {
-  requireSchoolId(schoolId)
-  const { data, error } = await supabase.from('students')
-    .insert({ ...cleanStudent(form), school_id: schoolId }).select(FIELDS).single()
-  if (error) throw error
-  return data
+  requireSchool(schoolId)
+  return (await apiRequest('/api/students',{method:'POST',body:JSON.stringify(cleanStudent(form))})).student
 }
-
 export async function updateStudent({ schoolId, studentId, form }) {
-  requireSchoolId(schoolId)
-  const { data, error } = await supabase.from('students')
-    .update(cleanStudent(form)).eq('school_id', schoolId).eq('id', studentId)
-    .select(FIELDS).single()
-  if (error) throw error
-  return data
+  requireSchool(schoolId)
+  return (await apiRequest('/api/students/'+encodeURIComponent(studentId),{method:'PATCH',body:JSON.stringify(cleanStudent(form))})).student
 }
-
 export async function deleteStudent({ schoolId, studentId }) {
-  requireSchoolId(schoolId)
-  const { error } = await supabase.from('students').delete()
-    .eq('school_id', schoolId).eq('id', studentId)
-  if (error) throw error
+  requireSchool(schoolId)
+  await apiRequest('/api/students/'+encodeURIComponent(studentId),{method:'DELETE'})
 }

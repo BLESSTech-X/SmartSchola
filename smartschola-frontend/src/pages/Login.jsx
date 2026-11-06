@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck, UserRound, BookOpen, BriefcaseBusiness } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
+import { apiRequest, apiConfigured } from '../lib/api.js'
 
 const roles = [
   { id: 'headmaster', label: 'Headmaster', icon: BriefcaseBusiness, description: 'School leadership and management', identityLabel: 'Headmaster email address', identityPlaceholder: 'name@school.edu.zm', autocomplete: 'username' },
@@ -25,17 +25,16 @@ export default function Login() {
   const schoolSlug = searchParams.get('school')
   const selectedRole = roles.find(item => item.id === role) || roles[0]
   const RoleIcon = selectedRole.icon
-  const apiConfigured = isSupabaseConfigured
 
   useEffect(() => {
     if (!schoolSlug) return
     let active = true
-    if (!isSupabaseConfigured) {
+    if (!apiConfigured) {
       setSchoolLoading(false)
       return () => { active = false }
     }
-    supabase.from('schools').select('id,name,slug,location').eq('slug', schoolSlug).eq('status', 'verified').maybeSingle()
-      .then(({ data, error }) => { if (active) setSchool(error ? null : data) })
+    apiRequest('/api/schools')
+      .then(({ schools }) => { if (active) setSchool((schools || []).find(item => item.slug === schoolSlug) || null) })
       .catch(() => { if (active) setSchool(null) })
       .finally(() => { if (active) setSchoolLoading(false) })
     return () => { active = false }
@@ -49,7 +48,7 @@ export default function Login() {
       return
     }
     if (!apiConfigured) {
-      setError('Supabase sign-in is not configured. Please contact SmartSchola support.')
+      setError('SmartSchola sign-in is not configured. Please contact support.')
       return
     }
     if (!form.username.includes('@')) {
@@ -58,22 +57,11 @@ export default function Login() {
     }
     setLoading(true)
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: form.username.trim(), password: form.password })
-      if (authError) throw authError
-      const { data: membership, error: membershipError } = await supabase.from('school_memberships')
-        .select('id,school_id,role,status').eq('school_id', school.id).eq('user_id', authData.user.id).eq('status', 'active').maybeSingle()
-      if (membershipError) throw membershipError
-      if (!membership || membership.role !== role) {
-        await supabase.auth.signOut()
-        setError('This account does not have an active ' + selectedRole.label.toLowerCase() + ' membership at ' + school.name + '. Contact your school headmaster.')
-        return
-      }
-      const { data: profile, error: profileError } = await supabase.from('profiles')
-        .select('full_name,phone').eq('id', authData.user.id).maybeSingle()
-      if (profileError) throw profileError
-      const userProfile = { id: authData.user.id, full_name: profile?.full_name || authData.user.email, email: authData.user.email,
-        phone: profile?.phone || '', school_id: school.id, school_slug: school.slug, school_name: school.name, role: membership.role }
-      login(authData.session.access_token, userProfile)
+      const result = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: form.username.trim(), password: form.password, school_slug: school.slug, role }),
+      })
+      login(result.access_token, result.user)
       navigate('/workspace', { replace: true })
     } catch (err) {
       setError(err.message || 'Sign-in failed. Check your email and password, then try again.')

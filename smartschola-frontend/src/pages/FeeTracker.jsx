@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import Modal from '../components/Modal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
-import client from '../api/client.js'
+import { apiRequest } from '../lib/api.js'
 import { useToast } from '../context/ToastContext.jsx'
 
 const statusBadge = (s) => {
@@ -33,8 +33,8 @@ export default function FeeTracker() {
 
   const fetchFees = useCallback(() => {
     setLoading(true)
-    client.get('/fees', { params: { search: search||undefined, page, per_page:20 } })
-      .then(r => { setFees(r.data.fees); setTotal(r.data.total); setSummary(r.data.summary) })
+    apiRequest(`/api/fees?page=${page}&per_page=20&search=${encodeURIComponent(search)}`)
+      .then(r => { setFees(r.fees || []); setTotal(r.total || 0); setSummary(r.summary || { total_due:0, total_collected:0, outstanding:0 }) })
       .catch(() => addToast('Failed to load fees','error'))
       .finally(() => setLoading(false))
   }, [search, page])
@@ -42,7 +42,7 @@ export default function FeeTracker() {
   useEffect(() => { fetchFees() }, [fetchFees])
 
   useEffect(() => {
-    client.get('/students', { params: { per_page:200 } }).then(r => setAllStudents(r.data.students)).catch(()=>{})
+    apiRequest('/api/students').then(r => setAllStudents(r.students || [])).catch(()=>{})
   }, [])
 
   const filteredStudents = allStudents.filter(s => `${s.first_name} ${s.last_name}`.toLowerCase().includes(studentSearch.toLowerCase())).slice(0, 8)
@@ -59,24 +59,49 @@ export default function FeeTracker() {
     if (!form.student_id || !form.term || !form.amount_due) { addToast('Student, term and amount due are required','warning'); return }
     setSaving(true)
     try {
-      if (editFee) { await client.put(`/fees/${editFee.id}`, form); addToast('Fee updated','success') }
-      else { await client.post('/fees', form); addToast('Fee record added','success') }
+      if (editFee) {
+        const previousPaid = Number(editFee.amount_paid || 0)
+        const nextPaid = Number(form.amount_paid || 0)
+        const due = Number(form.amount_due || 0)
+        if (nextPaid < previousPaid) throw new Error('Recorded payments cannot be reduced. Use a formal reversal to correct a payment.')
+        if (nextPaid > due) throw new Error('Amount paid cannot exceed the amount due.')
+        await apiRequest(`/api/fees/${editFee.id}`, { method: 'PUT', body: JSON.stringify(form) })
+        if (nextPaid > previousPaid) {
+          const method = String(form.payment_method || 'Cash').toLowerCase()
+          await apiRequest(`/api/fees/invoices/${editFee.id}/payments`, {
+            method: 'POST',
+            body: JSON.stringify({
+              amount_minor: Math.round((nextPaid - previousPaid) * 100),
+              method: method.includes('momo') ? 'mobile_money' : method === 'bank' ? 'bank' : 'cash',
+              paid_at: form.payment_date || new Date().toISOString(),
+              notes: form.notes || ''
+            })
+          })
+        }
+        addToast('Fee record updated and payment history saved','success')
+      } else {
+        await apiRequest('/api/fees', { method: 'POST', body: JSON.stringify(form) })
+        addToast('Fee record added','success')
+      }
       setModalOpen(false); fetchFees()
-    } catch (err) { addToast(err.response?.data?.detail||'Save failed','error') }
+    } catch (err) { addToast(err.message||'Save failed','error') }
     finally { setSaving(false) }
   }
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this fee record?')) return
-    try { await client.delete(`/fees/${id}`); addToast('Deleted','success'); fetchFees() }
+    try { await apiRequest(`/api/fees/${id}`, { method: 'DELETE' }); addToast('Deleted','success'); fetchFees() }
     catch { addToast('Delete failed','error') }
   }
 
   const sendReminders = async () => {
     setSendingReminders(true)
     try {
-      const r = await client.post('/fees/send-reminders')
-      addToast(`Reminders sent: ${r.data.sent} delivered, ${r.data.failed} failed`, r.data.failed > 0 ? 'warning' : 'success')
+      const r = await apiRequest('/api/sms/send', { method: 'POST', body: JSON.stringify({
+        recipients: 'fee_defaulters',
+        message: 'Dear Parent, your child has an outstanding fee balance. Please contact the school to settle the balance. Thank you.'
+      }) })
+      addToast(`Reminders sent: ${r.sent_count} delivered, ${r.failed_count} failed`, r.failed_count > 0 ? 'warning' : 'success')
     } catch { addToast('Failed to send reminders','error') }
     finally { setSendingReminders(false) }
   }

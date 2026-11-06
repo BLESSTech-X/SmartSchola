@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, GraduationCap, MapPin, Search, ShieldCheck, School, LockKeyhole } from 'lucide-react'
-import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
+import { apiRequest } from '../lib/api.js'
 
 export default function SchoolSignIn() {
   const [query, setQuery] = useState('')
@@ -12,17 +12,7 @@ export default function SchoolSignIn() {
 
   useEffect(() => {
     let active = true
-    if (!isSupabaseConfigured) {
-      setLoadError('The school directory is not configured yet. Please try again later.')
-      setLoading(false)
-      return () => { active = false }
-    }
-    supabase.from('schools').select('id,name,slug,location').eq('status', 'verified').order('name')
-      .then(({ data, error }) => {
-        if (!active) return
-        if (error) setLoadError('We could not load the registered school directory. Please try again shortly.')
-        else setSchools(data || [])
-      })
+    apiRequest('/api/schools').then(({ schools = [] }) => { if (active) setSchools(schools) })
       .catch(() => { if (active) setLoadError('We could not load the registered school directory. Please try again shortly.') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
