@@ -91,15 +91,25 @@ Supabase Auth password hashes are not compatible with the Worker's PBKDF2 format
 5. Choose one canonical frontend deployment. The repository architecture notes identify `smartschola-frontend/` as the GitHub Pages target; `frontend/` is a separate legacy app.
 6. Point the canonical frontend to the Worker only after API parity and staging checks pass. Then remove the Supabase SDK/config and retire the old API. Revoke Supabase credentials only after successful cutover.
 
-## Implemented routes
+## Implemented routes (current migration branch)
 
 - `GET /health`
 - `GET /api/schools`
-- `POST /api/auth/register`
+- `POST /api/auth/register` (creates a setup session)
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 - `POST /api/schools/register`
+- `GET|POST /api/academic-years`
+- `GET|POST /api/classes`
+- `GET|POST /api/students`
+- `GET|POST /api/subjects`
+- `GET|POST /api/assessments`
+- `GET|POST /api/assessments/:id/scores`
+- `GET|POST /api/attendance/sessions`
+- `GET|POST /api/attendance/sessions/:id/records`
 - `GET /api/platform/metrics`
+
+The routes above are the first API coverage batch, not complete feature parity. Fee collection, guardian approval/portal privacy, account recovery, school settings, timetable, public CMS, subscription enforcement, file uploads and remaining legacy workflows still need their handlers and end-to-end tests.
 
 D1 has no PostgreSQL RLS. All access must go through authenticated Worker handlers with explicit school and role checks. A browser-supplied school ID is never authorization.
