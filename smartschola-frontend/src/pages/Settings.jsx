@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings as SettingsIcon, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Settings as SettingsIcon, Plus, Trash2 } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
 import { apiRequest } from '../lib/api.js'
@@ -26,11 +26,10 @@ function Field({ label, children }) {
 const inp = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-400"
 
 export default function Settings() {
-  const [school, setSchool] = useState({ name:'', address:'', headmaster_name:'', phone:'', email:'', sms_provider:'africas_talking', sms_api_key:'', sms_username:'', sms_sender_id:'SmartSchola' })
+  const [school, setSchool] = useState({ name:'', address:'', headmaster_name:'', phone:'', email:'', sms_provider:'africas_talking', sms_sender_id:'SmartSchola' })
   const [subjects, setSubjects] = useState([])
   const [newSubject, setNewSubject] = useState({ name:'', code:'' })
   const [pw, setPw] = useState({ current_password:'', new_password:'', confirm_password:'' })
-  const [showKey, setShowKey] = useState(false)
   const [loading, setLoading] = useState(true)
   const [savingSchool, setSavingSchool] = useState(false)
   const [savingPw, setSavingPw] = useState(false)
@@ -121,17 +120,11 @@ export default function Settings() {
             </select>
           </Field>
           <Field label="Sender ID"><input className={inp} value={school.sms_sender_id} onChange={e => setSchool(p=>({...p,sms_sender_id:e.target.value}))} placeholder="SmartSchola" /></Field>
-          <Field label="API Username"><input className={inp} value={school.sms_username} onChange={e => setSchool(p=>({...p,sms_username:e.target.value}))} /></Field>
-          <Field label="API Key">
-            <div className="relative">
-              <input className={inp + ' pr-10'} type={showKey?'text':'password'} value={school.sms_api_key} onChange={e => setSchool(p=>({...p,sms_api_key:e.target.value}))} placeholder="Your API key" />
-              <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </Field>
+          <div className="col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-900 leading-relaxed">
+            Provider credentials are stored securely as Cloudflare Worker secrets, not in school settings or the browser. Configure <strong>AT_API_KEY</strong> and <strong>AT_USERNAME</strong> in the Cloudflare Worker environment to enable SMS delivery.
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-3">💡 No API key? SMS will be logged to <code>sms_log.txt</code> on the server for testing.</p>
+        <p className="text-xs text-gray-400 mt-3">SMS messages and delivery results are recorded in Cloudflare D1.</p>
         <button onClick={saveSchool} disabled={savingSchool} className="mt-4 px-5 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center gap-2 hover:opacity-90 disabled:opacity-60" style={{ background:'#0B1D3A' }}>
           {savingSchool && <LoadingSpinner size={14} color="white" />}Save SMS Settings
         </button>
