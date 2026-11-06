@@ -3,7 +3,7 @@ import { MessageSquare, Send } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
-import client from '../api/client.js'
+import { apiRequest } from '../lib/api.js'
 import { useToast } from '../context/ToastContext.jsx'
 
 const TEMPLATES = [
@@ -33,8 +33,8 @@ export default function SMS() {
 
   const fetchLogs = () => {
     setLogsLoading(true)
-    client.get('/sms/log', { params: { per_page: 20 } })
-      .then(r => { setLogs(r.data.logs); setLogsTotal(r.data.total) })
+    apiRequest('/api/sms/log?per_page=20')
+      .then(r => { setLogs(r.logs || []); setLogsTotal(r.total || 0) })
       .catch(() => {})
       .finally(() => setLogsLoading(false))
   }
@@ -57,10 +57,10 @@ export default function SMS() {
         custom_phone: recipients === 'custom' ? customPhone : undefined,
         message
       }
-      const r = await client.post('/sms/send', payload)
+      const r = await apiRequest('/api/sms/send', { method: 'POST', body: JSON.stringify(payload) })
       addToast(`SMS sent to ${r.data.sent_count} recipients. ${r.data.failed_count > 0 ? `${r.data.failed_count} failed.` : ''}`, r.data.failed_count > 0 ? 'warning' : 'success')
       fetchLogs()
-    } catch (err) { addToast(err.response?.data?.detail||'Send failed','error') }
+    } catch (err) { addToast(err.message||'Send failed','error') }
     finally { setSending(false) }
   }
 
