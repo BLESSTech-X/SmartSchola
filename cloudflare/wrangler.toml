@@ -10,3 +10,4 @@ migrations_dir = "migrations"
 
 [vars]
 ALLOWED_ORIGINS = "https://blesstech-x.github.io,http://localhost:5173"
+APP_ORIGIN = "https://blesstech-x.github.io/SmartSchola"
