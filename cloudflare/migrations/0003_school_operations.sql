@@ -354,3 +354,10 @@ BEGIN SELECT RAISE(ABORT,'Timetable teacher must be active in the same school');
 CREATE TRIGGER IF NOT EXISTS fee_payment_balance_guard BEFORE INSERT ON fee_payments
 WHEN NOT EXISTS(SELECT 1 FROM student_invoices i WHERE i.id=NEW.invoice_id AND i.school_id=NEW.school_id AND i.student_id=NEW.student_id AND i.paid_minor+NEW.amount_minor<=i.total_minor)
 BEGIN SELECT RAISE(ABORT,'Payment exceeds the remaining invoice balance'); END;
+
+CREATE TRIGGER IF NOT EXISTS parent_link_membership_guard BEFORE INSERT ON parent_student_links
+WHEN NOT EXISTS(SELECT 1 FROM school_memberships m WHERE m.school_id=NEW.school_id AND m.user_id=NEW.parent_user_id AND m.role='parent' AND m.status='active')
+BEGIN SELECT RAISE(ABORT,'Parent must have an active parent membership in this school'); END;
+CREATE TRIGGER IF NOT EXISTS student_account_membership_guard BEFORE INSERT ON student_account_links
+WHEN NOT EXISTS(SELECT 1 FROM school_memberships m WHERE m.school_id=NEW.school_id AND m.user_id=NEW.user_id AND m.role='student' AND m.status='active')
+BEGIN SELECT RAISE(ABORT,'Student account must have an active student membership in this school'); END;
