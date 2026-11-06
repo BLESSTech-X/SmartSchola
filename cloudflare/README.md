@@ -86,7 +86,7 @@ Supabase Auth password hashes are not compatible with the Worker's PBKDF2 format
 
 1. Implement and test Worker endpoints for every new table/module in `0003_school_operations.sql` and port all frontend Supabase calls/RPCs: school registration/profile, membership approvals, school verification/suspension, student CRUD, classes, academic years, assessments, marks, student/parent linking, portal access and platform admin controls.
 2. Port legacy FastAPI features still used: fees, reports, SMS, dashboard, settings and account recovery.
-3. Implement SMTP/email recovery and authenticated R2 upload/download routes.
+3. Implement SMTP/email recovery and select an affordable, authenticated file-storage option before enabling uploads.
 4. Add automated tenant-isolation and role tests, including student/parent privacy and score validation.
 5. Choose one canonical frontend deployment. The repository architecture notes identify `smartschola-frontend/` as the GitHub Pages target; `frontend/` is a separate legacy app.
 6. Point the canonical frontend to the Worker only after API parity and staging checks pass. Then remove the Supabase SDK/config and retire the old API. Revoke Supabase credentials only after successful cutover.
@@ -108,8 +108,12 @@ Supabase Auth password hashes are not compatible with the Worker's PBKDF2 format
 - `GET|POST /api/assessments/:id/scores`
 - `GET|POST /api/attendance/sessions`
 - `GET|POST /api/attendance/sessions/:id/records`
+- `GET|POST /api/fees/invoices`
+- `POST /api/fees/invoices/:id/payments`
+- `GET /api/platform/schools`
+- `PATCH /api/platform/schools/:id/status`
 - `GET /api/platform/metrics`
 
-The routes above are the first API coverage batch, not complete feature parity. Fee collection, guardian approval/portal privacy, account recovery, school settings, timetable, public CMS, subscription enforcement, file uploads and remaining legacy workflows still need their handlers and end-to-end tests.
+The routes above are the first API coverage batch, not complete feature parity. Guardian approval/portal privacy, account recovery, school settings, timetable management, public CMS, subscription enforcement, file uploads and remaining legacy workflows still need their handlers and end-to-end tests.
 
 D1 has no PostgreSQL RLS. All access must go through authenticated Worker handlers with explicit school and role checks. A browser-supplied school ID is never authorization.
