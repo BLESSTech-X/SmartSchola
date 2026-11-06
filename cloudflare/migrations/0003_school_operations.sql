@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS class_subjects (
   UNIQUE(school_id,class_id,subject_id),
   FOREIGN KEY(class_id,school_id) REFERENCES classes(id,school_id) ON DELETE CASCADE,
   FOREIGN KEY(subject_id,school_id) REFERENCES subjects(id,school_id) ON DELETE CASCADE,
-  FOREIGN KEY(teacher_membership_id,school_id) REFERENCES school_memberships(id,school_id) ON DELETE SET NULL
+  FOREIGN KEY(teacher_membership_id,school_id) REFERENCES school_memberships(id,school_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS attendance_sessions (
@@ -242,8 +242,8 @@ CREATE TABLE IF NOT EXISTS timetable_entries (
   academic_year_id TEXT,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   FOREIGN KEY(class_id,school_id) REFERENCES classes(id,school_id) ON DELETE CASCADE,
-  FOREIGN KEY(subject_id,school_id) REFERENCES subjects(id,school_id) ON DELETE SET NULL,
-  FOREIGN KEY(teacher_membership_id,school_id) REFERENCES school_memberships(id,school_id) ON DELETE SET NULL,
+  FOREIGN KEY(subject_id,school_id) REFERENCES subjects(id,school_id) ON DELETE RESTRICT,
+  FOREIGN KEY(teacher_membership_id,school_id) REFERENCES school_memberships(id,school_id) ON DELETE RESTRICT,
   CHECK(starts_at<ends_at)
 );
 CREATE INDEX IF NOT EXISTS timetable_class_day_idx ON timetable_entries(school_id,class_id,day_of_week,starts_at);
