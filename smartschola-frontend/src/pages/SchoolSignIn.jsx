@@ -12,17 +12,7 @@ export default function SchoolSignIn() {
 
   useEffect(() => {
     let active = true
-    apiRequest('/api/schools').then(({schools=[]}) => { if (active) setSchools(schools) })
-      .catch(() => { if (active) setLoadError('We could not load the registered school directory. Please try again shortly.') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-    }
-    supabase.from('schools').select('id,name,slug,location').eq('status', 'verified').order('name')
-      .then(({ data, error }) => {
-        if (!active) return
-        if (error) setLoadError('We could not load the registered school directory. Please try again shortly.')
-        else setSchools(data || [])
-      })
+    apiRequest('/api/schools').then(({ schools = [] }) => { if (active) setSchools(schools) })
       .catch(() => { if (active) setLoadError('We could not load the registered school directory. Please try again shortly.') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
