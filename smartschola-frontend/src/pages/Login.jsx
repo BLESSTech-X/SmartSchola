@@ -25,7 +25,6 @@ export default function Login() {
   const schoolSlug = searchParams.get('school')
   const selectedRole = roles.find(item => item.id === role) || roles[0]
   const RoleIcon = selectedRole.icon
-  const apiReady = apiConfigured
 
   useEffect(() => {
     if (!schoolSlug) return
