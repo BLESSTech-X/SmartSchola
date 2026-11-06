@@ -26,34 +26,14 @@ export default function Dashboard() {
       addToast('Your account is not linked to a school. Please sign in again.', 'error')
       return () => { active = false }
     }
-    Promise.all([apiRequest('/api/students'),apiRequest('/api/classes'),apiRequest('/api/academic-years')])
-      .then(([studentsResult,classesResult,yearsResult]) => {
+    Promise.all([apiRequest('/api/students'), apiRequest('/api/classes'), apiRequest('/api/academic-years')])
+      .then(([studentsResult, classesResult, yearsResult]) => {
         if (!active) return
         setStats({ total_students: (studentsResult.students || []).filter(s => s.status === 'active').length, recent_activity: [] })
         setAcademicOverview({
           currentYear: (yearsResult.academic_years || []).find(y => y.is_current) || null,
           totalClasses: (classesResult.classes || []).length
         })
-      })
-      .catch(err => { if (active) addToast(err.message || 'Could not load the school dashboard', 'error') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-    }
-    Promise.all([
-      supabase.from('students').select('id', { count: 'exact', head: true })
-        .eq('school_id', schoolId).eq('status', 'active'),
-      supabase.from('classes').select('id', { count: 'exact', head: true })
-        .eq('school_id', schoolId),
-      supabase.from('academic_years').select('id,name,starts_on,ends_on,is_current')
-        .eq('school_id', schoolId).eq('is_current', true).maybeSingle(),
-    ])
-      .then(([studentsResult, classesResult, yearResult]) => {
-        if (!active) return
-        if (studentsResult.error) throw studentsResult.error
-        if (classesResult.error) throw classesResult.error
-        if (yearResult.error) throw yearResult.error
-        setStats({ total_students: studentsResult.count || 0, recent_activity: [] })
-        setAcademicOverview({ currentYear: yearResult.data || null, totalClasses: classesResult.count || 0 })
       })
       .catch(err => { if (active) addToast(err.message || 'Could not load the school dashboard', 'error') })
       .finally(() => { if (active) setLoading(false) })
