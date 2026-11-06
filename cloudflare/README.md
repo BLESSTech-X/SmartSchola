@@ -84,7 +84,7 @@ Supabase Auth password hashes are not compatible with the Worker's PBKDF2 format
 
 ## 7. Required before full cutover
 
-1. Implement and test Worker endpoints for every new table/module in `0003_school_operations.sql` and port all frontend Supabase calls/RPCs: school registration/profile, membership approvals, school verification/suspension, student CRUD, classes, academic years, assessments, marks, student/parent linking, portal access and platform admin controls.
+1. Implement and test the remaining Worker endpoints and port all remaining frontend Supabase calls/RPCs: membership provisioning and approvals, student/parent account linking, platform admin authentication and controls, school profile/settings, results, fee history/reminders, SMS, password recovery and remaining legacy FastAPI workflows.
 2. Port legacy FastAPI features still used: fees, reports, SMS, dashboard, settings and account recovery.
 3. Implement SMTP/email recovery and select an affordable, authenticated file-storage option before enabling uploads.
 4. Add automated tenant-isolation and role tests, including student/parent privacy and score validation.
@@ -100,11 +100,14 @@ Supabase Auth password hashes are not compatible with the Worker's PBKDF2 format
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 - `POST /api/schools/register`
-- `GET|POST /api/academic-years`
-- `GET|POST /api/classes`
-- `GET|POST /api/students`
+- `GET|POST|PATCH|DELETE /api/academic-years`
+- `GET|POST|PATCH|DELETE /api/classes`
+- `GET|POST|PATCH|DELETE /api/students`
+- `GET|POST|DELETE /api/class-teachers`
+- `GET /api/school-teachers`
 - `GET|POST /api/subjects`
 - `GET|POST /api/assessments`
+- `PATCH /api/assessments/:id`
 - `GET|POST /api/assessments/:id/scores`
 - `GET|POST /api/attendance/sessions`
 - `GET|POST /api/attendance/sessions/:id/records`
