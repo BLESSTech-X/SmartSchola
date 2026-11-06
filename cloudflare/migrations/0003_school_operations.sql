@@ -350,3 +350,7 @@ BEGIN SELECT RAISE(ABORT,'Timetable subject must belong to the same school'); EN
 CREATE TRIGGER IF NOT EXISTS timetable_teacher_school_insert BEFORE INSERT ON timetable_entries
 WHEN NEW.teacher_membership_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM school_memberships m WHERE m.id=NEW.teacher_membership_id AND m.school_id=NEW.school_id AND m.role='teacher' AND m.status='active')
 BEGIN SELECT RAISE(ABORT,'Timetable teacher must be active in the same school'); END;
+
+CREATE TRIGGER IF NOT EXISTS fee_payment_balance_guard BEFORE INSERT ON fee_payments
+WHEN NOT EXISTS(SELECT 1 FROM student_invoices i WHERE i.id=NEW.invoice_id AND i.school_id=NEW.school_id AND i.student_id=NEW.student_id AND i.paid_minor+NEW.amount_minor<=i.total_minor)
+BEGIN SELECT RAISE(ABORT,'Payment exceeds the remaining invoice balance'); END;
