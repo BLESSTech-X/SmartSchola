@@ -31,15 +31,17 @@ export default function SchoolRegistration() {
     }
     setLoading(true)
     try {
-      const account = await apiRequest('/api/auth/register', {
+      await apiRequest('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email: form.email.trim(), password: form.password, full_name: form.fullName.trim() }),
         token: '',
-      })
-      await apiRequest('/api/schools/register', {
-        method: 'POST',
-        token: account.access_token,
-        body: JSON.stringify({ name: form.schoolName.trim(), slug, location: form.location.trim() }),
+        body: JSON.stringify({
+          email: form.email.trim(),
+          password: form.password,
+          full_name: form.fullName.trim(),
+          school_name: form.schoolName.trim(),
+          school_slug: slug,
+          school_location: form.location.trim(),
+        }),
       })
       setMessage('Your headmaster account and school registration have been submitted. The school is pending verification and will appear in the public directory only after approval.')
       setForm({ schoolName: '', location: '', fullName: '', email: '', password: '' })
