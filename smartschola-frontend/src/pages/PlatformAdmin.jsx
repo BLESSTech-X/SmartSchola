@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Activity, Building2, CheckCircle2, Clock3, GraduationCap, LogOut, RefreshCw, ShieldCheck, Users, XCircle } from 'lucide-react'
-import { supabase } from '../lib/supabase.js'
+import { apiRequest } from '../lib/api.js'
 
 const initialMetrics = { schools_total: 0, schools_pending: 0, schools_verified: 0, schools_suspended: 0, students_total: 0, teachers_total: 0, parents_total: 0, school_admins_total: 0, classes_total: 0 }
 const metricCards = [
@@ -29,65 +29,52 @@ export default function PlatformAdmin() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
-  const loadAccess = useCallback(async (user) => {
-    if (!user || !supabase) { setSessionUser(null); setGrant(null); setLoading(false); return null }
-    setSessionUser(user)
-    const { data, error: accessError } = await supabase.from('platform_admins')
-      .select('role,status').eq('user_id', user.id).maybeSingle()
-    if (accessError) throw accessError
-    if (!data || data.status !== 'active') { setGrant(null); setLoading(false); setSchools([]); setAudit([]); setMetrics(initialMetrics); return null }
-    setGrant(data)
-    const [{ data: stats, error: statsError }, { data: schoolRows, error: schoolError }, { data: auditRows, error: auditError }] = await Promise.all([
-      supabase.rpc('platform_dashboard_metrics'),
-      supabase.from('schools').select('id,name,slug,location,status,created_at').order('created_at', { ascending: false }).limit(200),
-      supabase.from('platform_admin_audit_logs').select('id,action,target_type,details,created_at').order('created_at', { ascending: false }).limit(12),
+  const loadAccess = useCallback(async (token) => {
+    if (!token) { setSessionUser(null); setGrant(null); setLoading(false); return null }
+    const user = await apiRequest('/api/platform/auth/me', { token })
+    const [stats, schoolRows, auditRows] = await Promise.all([
+      apiRequest('/api/platform/metrics', { token }),
+      apiRequest('/api/platform/schools', { token }),
+      apiRequest('/api/platform/audit', { token })
     ])
-    if (statsError) throw statsError
-    if (schoolError) throw schoolError
-    if (auditError && data.role !== 'support') throw auditError
-    setMetrics({ ...initialMetrics, ...(stats || {}) })
-    setSchools(schoolRows || [])
-    setAudit(auditRows || [])
+    setSessionUser(user)
+    setGrant({ role: user.role, status: 'active' })
+    setMetrics({ ...initialMetrics, ...(stats.metrics || {}) })
+    setSchools(schoolRows.schools || [])
+    setAudit(auditRows.audit || [])
     setLoading(false)
+    return user
   }, [])
 
   useEffect(() => {
     let active = true
-    if (!supabase) { setError('Supabase is not configured for this deployment.'); setLoading(false); return }
-    supabase.auth.getSession().then(async ({ data, error: sessionError }) => {
+    const token = sessionStorage.getItem('platform_token')
+    if (!token) { setLoading(false); return }
+    loadAccess(token).catch(err => {
       if (!active) return
-      if (sessionError) throw sessionError
-      if (data.session?.user) await loadAccess(data.session.user)
-      else { setSessionUser(null); setGrant(null); setLoading(false) }
-    }).catch(err => { if (active) { setError(err.message || 'Could not verify platform access.'); setLoading(false) } })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return
-      if (session?.user) loadAccess(session.user).catch(err => setError(err.message || 'Could not load platform access.'))
-      else { setSessionUser(null); setGrant(null); setSchools([]); setMetrics(initialMetrics) }
+      sessionStorage.removeItem('platform_token')
+      setError(err.message || 'Could not verify platform access.')
+      setLoading(false)
     })
-    return () => { active = false; subscription.unsubscribe() }
+    return () => { active = false }
   }, [loadAccess])
 
   const signIn = async event => {
     event.preventDefault()
     setError(''); setNotice(''); setBusy(true)
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-      if (signInError) throw signInError
-      const access = await loadAccess(data.user)
-      if (!access) throw new Error('This account is not authorised for platform administration.')
-    } catch (err) {
-      setError(err.message || 'Platform sign-in failed.')
-      await supabase.auth.signOut()
-    } finally { setBusy(false) }
+      const data = await apiRequest('/api/platform/auth/login', { method: 'POST', body: JSON.stringify({ email: email.trim(), password }) })
+      sessionStorage.setItem('platform_token', data.access_token)
+      await loadAccess(data.access_token)
+      setPassword('')
+    } catch (err) { setError(err.message || 'Platform sign-in failed.') }
+    finally { setBusy(false) }
   }
 
   const refresh = async () => {
     setLoading(true); setError('')
-    try {
-      const { data } = await supabase.auth.getUser()
-      await loadAccess(data.user)
-    } catch (err) { setError(err.message || 'Refresh failed.') }
+    try { await loadAccess(sessionStorage.getItem('platform_token')) }
+    catch (err) { setError(err.message || 'Refresh failed.') }
     finally { setLoading(false) }
   }
 
@@ -96,16 +83,19 @@ export default function PlatformAdmin() {
     if (!window.confirm(`Are you sure you want to ${verb} ${school.name}?`)) return
     setBusyId(school.id); setError(''); setNotice('')
     try {
-      const { data, error: actionError } = await supabase.functions.invoke('platform-admin-control', { body: { school_id: school.id, status } })
-      if (actionError) throw actionError
-      if (data?.error) throw new Error(data.error)
-      setNotice(data?.message || data?.warning || 'School status updated.')
+      await apiRequest(`/api/platform/schools/${school.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }), token: sessionStorage.getItem('platform_token') })
+      setNotice('School status updated.')
       await refresh()
     } catch (err) { setError(err.message || 'Could not update school status.') }
     finally { setBusyId('') }
   }
 
-  const signOut = async () => { await supabase.auth.signOut(); setSessionUser(null); setGrant(null); setSchools([]) }
+  const signOut = async () => {
+    const token = sessionStorage.getItem('platform_token')
+    if (token) apiRequest('/api/auth/logout', { method: 'POST', token }).catch(() => {})
+    sessionStorage.removeItem('platform_token')
+    setSessionUser(null); setGrant(null); setSchools([]); setAudit([]); setMetrics(initialMetrics)
+  }
   const visibleSchools = schools.filter(s => filter === 'all' || s.status === filter)
 
   if (loading) return <div className="min-h-screen bg-slate-50 grid place-items-center text-slate-500">Loading secure platform workspace…</div>
