@@ -59,8 +59,30 @@ export default function FeeTracker() {
     if (!form.student_id || !form.term || !form.amount_due) { addToast('Student, term and amount due are required','warning'); return }
     setSaving(true)
     try {
-      if (editFee) { await apiRequest(`/api/fees/${editFee.id}`, { method: 'PUT', body: JSON.stringify(form) }); addToast('Fee updated','success') }
-      else { await apiRequest('/api/fees', { method: 'POST', body: JSON.stringify(form) }); addToast('Fee record added','success') }
+      if (editFee) {
+        const previousPaid = Number(editFee.amount_paid || 0)
+        const nextPaid = Number(form.amount_paid || 0)
+        const due = Number(form.amount_due || 0)
+        if (nextPaid < previousPaid) throw new Error('Recorded payments cannot be reduced. Use a formal reversal to correct a payment.')
+        if (nextPaid > due) throw new Error('Amount paid cannot exceed the amount due.')
+        await apiRequest(`/api/fees/${editFee.id}`, { method: 'PUT', body: JSON.stringify(form) })
+        if (nextPaid > previousPaid) {
+          const method = String(form.payment_method || 'Cash').toLowerCase()
+          await apiRequest(`/api/fees/invoices/${editFee.id}/payments`, {
+            method: 'POST',
+            body: JSON.stringify({
+              amount_minor: Math.round((nextPaid - previousPaid) * 100),
+              method: method.includes('momo') ? 'mobile_money' : method === 'bank' ? 'bank' : 'cash',
+              paid_at: form.payment_date || new Date().toISOString(),
+              notes: form.notes || ''
+            })
+          })
+        }
+        addToast('Fee record updated and payment history saved','success')
+      } else {
+        await apiRequest('/api/fees', { method: 'POST', body: JSON.stringify(form) })
+        addToast('Fee record added','success')
+      }
       setModalOpen(false); fetchFees()
     } catch (err) { addToast(err.message||'Save failed','error') }
     finally { setSaving(false) }
