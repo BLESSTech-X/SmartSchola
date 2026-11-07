@@ -7,8 +7,8 @@ import { apiRequest, apiConfigured } from '../lib/api.js'
 const roles = [
   { id: 'headmaster', label: 'Headmaster', icon: BriefcaseBusiness, description: 'School leadership and management', identityLabel: 'Headmaster email address', identityPlaceholder: 'name@school.edu.zm' },
   { id: 'teacher', label: 'Teacher', icon: BookOpen, description: 'Classes, marks and learner records', identityLabel: 'School account email address', identityPlaceholder: 'Email registered with your school' },
-  { id: 'student', label: 'Student', icon: GraduationCap, description: 'Learning, results and school updates', identityLabel: 'Student account email address', identityPlaceholder: 'Student email address' },
-  { id: 'parent', label: 'Parent / Guardian', icon: UserRound, description: 'Your child’s updates and reports', identityLabel: 'Parent / guardian email address', identityPlaceholder: 'Your registered email address' },
+  { id: 'student', label: 'Student', icon: GraduationCap, description: 'Learning, results and school updates', identityLabel: 'Student ID or email address', identityPlaceholder: 'Enter your school-issued Student ID or email' },
+  { id: 'parent', label: 'Parent / Guardian', icon: UserRound, description: 'Your children’s updates and reports', identityLabel: 'Parent / guardian email address', identityPlaceholder: 'Your registered email address' },
 ]
 const emptyRegistration = { full_name:'', first_name:'', last_name:'', email:'', password:'', phone:'', qualifications:'', subjects:'', years_experience:'', message:'', class_id:'', grade:'', date_of_birth:'', gender:'', guardian_name:'', guardian_phone:'', previous_school:'', student_number:'', relationship:'Parent / Guardian', school_name:'', school_slug:'', school_location:'' }
 const readImage = file => new Promise((resolve,reject) => { const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=reject; reader.readAsDataURL(file) })
@@ -61,7 +61,7 @@ export default function Login() {
     e.preventDefault();setError('')
     if(!apiConfigured){setError('SmartSchola sign-in is not configured. Please contact support.');return}
     if(!schoolSlug||!school){setError('Choose a verified school before signing in.');return}
-    if(!form.username.includes('@')){setError('Use the email address registered to your school account.');return}
+    if(role!=='student'&&!form.username.includes('@')){setError('Use the email address registered to your school account.');return}
     setLoading(true)
     try{
       const result=await apiRequest('/api/auth/login',{method:'POST',body:JSON.stringify({email:form.username.trim(),password:form.password,school_slug:school.slug,role})})
@@ -94,8 +94,6 @@ export default function Login() {
     finally{setLoading(false)}
   }
 
-  if(!schoolSlug)return <Navigate to="/school-sign-in" replace/>
-
   return <div className="login-page">
     <aside className="login-side-panel">
       <Link to="/school-sign-in" className="login-back-link"><ArrowLeft size={16}/> Change school</Link>
@@ -114,15 +112,15 @@ export default function Login() {
       <span className="public-section-kicker">{mode==='login'?'WELCOME BACK':'NEW SCHOOL ACCOUNT'}</span>
       <h2>{mode==='login'?'Sign in to your school':'Create your account'}</h2>
       <p className="login-intro">{mode==='login'?'Enter the email and password registered with your selected school.':'Choose your role and complete the relevant registration form. Your request will follow the school’s approval process.'}</p>
-      <div className="login-school-context"><GraduationCap size={17}/><span>Selected school</span><small>{schoolLoading?'Checking school…':school?.name||'School not recognised'}</small><Link to="/school-sign-in">Change</Link></div>
-      {!schoolLoading&&!school&&<div role="alert" className="login-error"><ShieldCheck size={17}/><span>This school is not available. Return to the school directory and select a verified school.</span></div>}
+      <div className="login-school-context"><GraduationCap size={17}/><span>Selected school</span><small>{schoolLoading?'Checking school…':school?.name||(role==='headmaster'&&mode==='register'?'New school registration':'School not recognised')}</small><Link to="/school-sign-in">Change</Link></div>
+      {!schoolLoading&&!school&&schoolSlug&&<div role="alert" className="login-error"><ShieldCheck size={17}/><span>This school is not available. Return to the school directory and select a verified school.</span></div>}
       <div className="login-role-heading"><span>Choose your role</span><small>Login and registration use the same role</small></div>
       <div className="login-role-grid" role="group" aria-label="Choose account role">
         {roles.map(item=>{const Icon=item.icon;return <button key={item.id} type="button" className={role===item.id?'login-role-option selected':'login-role-option'} onClick={()=>{setRole(item.id);setError('');setSuccess('')}} aria-pressed={role===item.id}><span className="login-role-icon"><Icon size={19}/></span><span className="login-role-copy"><strong>{item.label}</strong><small>{item.description}</small></span><span className="login-role-radio"/></button>})}
       </div>
       <div className="login-mode-switch" role="group" aria-label="Choose login or registration"><button type="button" className={mode==='login'?'active':''} onClick={()=>switchMode('login')}><LockKeyhole size={16}/> Login</button><button type="button" className={mode==='register'?'active':''} onClick={()=>switchMode('register')}><UserRound size={16}/> Register if new</button></div>
       {success?<div className="school-join-success login-inline-success"><CheckCircle2 size={34}/><h2>Registration received</h2><p>{success}</p><p className="school-join-next">{role==='headmaster'?'Your school will appear after SmartSchola verification.':'You can sign in with this email after the school approves your request or parent link.'}</p><button type="button" onClick={()=>switchMode('login')}>Go to login</button></div>:mode==='login'?<form onSubmit={handleLogin}>
-        <label htmlFor="login-identity">{selectedRole.identityLabel}</label><input id="login-identity" type="email" autoComplete="username" required value={form.username} onChange={e=>setForm(v=>({...v,username:e.target.value}))} placeholder={selectedRole.identityPlaceholder}/>
+        <label htmlFor="login-identity">{selectedRole.identityLabel}</label><input id="login-identity" type={role==='student'?'text':'email'} inputMode={role==='student'?'text':'email'} autoComplete="username" required value={form.username} onChange={e=>setForm(v=>({...v,username:e.target.value}))} placeholder={selectedRole.identityPlaceholder}/>
         <label htmlFor="login-password">Password</label><div className="login-password-wrap"><input id="login-password" type={showPass?'text':'password'} autoComplete="current-password" required value={form.password} onChange={e=>setForm(v=>({...v,password:e.target.value}))} placeholder="Enter your password"/><button type="button" onClick={()=>setShowPass(v=>!v)} aria-label={showPass?'Hide password':'Show password'}>{showPass?<EyeOff size={18}/>:<Eye size={18}/>}</button></div>
         {error&&<div role="alert" className="login-error"><ShieldCheck size={17}/><span>{error}</span></div>}
         <button className="login-submit" type="submit" disabled={loading||schoolLoading||!school}><LockKeyhole size={17}/>{loading?'Checking your access…':'Login as '+selectedRole.label}</button>
@@ -153,7 +151,7 @@ export default function Login() {
             <label>Parent / guardian full name<input required value={registration.full_name} onChange={e=>change('full_name',e.target.value)} autoComplete="name"/></label>
             <label>Your email address<input required type="email" value={registration.email} onChange={e=>change('email',e.target.value)} autoComplete="email"/></label>
             <label>Phone number<input required value={registration.phone} onChange={e=>change('phone',e.target.value)} autoComplete="tel"/></label>
-            <label>Child’s student number<input required value={registration.student_number} onChange={e=>change('student_number',e.target.value)} placeholder="Use the student number issued by the school"/></label>
+            <label>Child student number(s)<textarea required rows={3} value={registration.student_number} onChange={e=>change('student_number',e.target.value)} placeholder="Enter one or more school-issued Student IDs, separated by commas or new lines"/><small>You can add multiple children to this one parent account. Each child must have a student number issued by the school.</small></label>
             <label>Relationship to learner<input required value={registration.relationship} onChange={e=>change('relationship',e.target.value)} placeholder="Parent, mother, father or guardian"/></label>
           </>}
         </>}
