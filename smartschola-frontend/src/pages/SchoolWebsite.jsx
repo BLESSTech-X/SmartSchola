@@ -4,12 +4,13 @@ import PageHeader from '../components/PageHeader.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
 import {apiRequest} from '../lib/api.js'
 import {useToast} from '../context/ToastContext.jsx'
+import {useAuth} from '../context/AuthContext.jsx'
 const readImage=file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})
 const blank={headline:'Welcome to our school',intro:'Share what makes your school special.',motto:'Learning today. Leading tomorrow.',about:'',hero_title:'A place to learn, belong and thrive.',hero_text:'Discover our school community.',hero_image_url:'',contact_phone:'',contact_email:'',admissions_open:false,news:[],events:[],gallery:[]}
 export default function SchoolWebsite(){
- const{addToast}=useToast(),[content,setContent]=useState(blank),[published,setPublished]=useState(false),[logo,setLogo]=useState(''),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false)
+ const{addToast}=useToast(),{updateCurrentUser}=useAuth(),[content,setContent]=useState(blank),[published,setPublished]=useState(false),[logo,setLogo]=useState(''),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false)
  useEffect(()=>{Promise.all([apiRequest('/api/school/website'),apiRequest('/api/school/branding')]).then(([r,b])=>{setContent({...blank,...r.content});setPublished(r.is_published);setLogo(b.logo_data||'')}).catch(e=>addToast(e.message||'Could not load website settings','error')).finally(()=>setLoading(false))},[])
- const save=async publish=>{setSaving(true);try{await apiRequest('/api/school/branding',{method:'PUT',body:JSON.stringify({logo_data:logo||null})});await apiRequest('/api/school/website',{method:'PUT',body:JSON.stringify({content,is_published:publish})});setPublished(publish);addToast(publish?'School website and logo published.':'Website draft and logo saved.','success')}catch(e){addToast(e.message||'Could not save website','error')}finally{setSaving(false)}}
+ const save=async publish=>{setSaving(true);try{const branding=await apiRequest('/api/school/branding',{method:'PUT',body:JSON.stringify({logo_data:logo||null})});updateCurrentUser({school_logo_data:branding.logo_data});await apiRequest('/api/school/website',{method:'PUT',body:JSON.stringify({content,is_published:publish})});setPublished(publish);addToast(publish?'School website and logo published.':'Website draft and logo saved.','success')}catch(e){addToast(e.message||'Could not save website','error')}finally{setSaving(false)}}
  const field=(key,label,multi=false)=><label className="website-field">{label}{multi?<textarea rows="4" value={content[key]||''} onChange={e=>setContent(v=>({...v,[key]:e.target.value}))}/>:<input value={content[key]||''} onChange={e=>setContent(v=>({...v,[key]:e.target.value}))}/>}</label>
  const updateItem=(key,index,fieldName,value)=>setContent(v=>({...v,[key]:v[key].map((item,i)=>i===index?{...item,[fieldName]:value}:item)}))
  const removeItem=(key,index)=>setContent(v=>({...v,[key]:v[key].filter((_,i)=>i!==index)}))
