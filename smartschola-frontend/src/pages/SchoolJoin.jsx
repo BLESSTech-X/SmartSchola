@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Camera, CheckCircle2, GraduationCap, LoaderCircle, School, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Camera, CheckCircle2, GraduationCap, LoaderCircle, School, ShieldCheck, UserRound, LogIn, UserPlus, BookOpen } from 'lucide-react'
 import { apiRequest } from '../lib/api.js'
 
 const readImage = file => new Promise((resolve, reject) => {
@@ -13,6 +13,7 @@ const readImage = file => new Promise((resolve, reject) => {
 export default function SchoolJoin() {
   const { slug } = useParams()
   const [data, setData] = useState({ school: null, classes: [] })
+  const [mode, setMode] = useState('choice')
   const [role, setRole] = useState('teacher')
   const [photo, setPhoto] = useState('')
   const [form, setForm] = useState({ full_name:'', first_name:'', last_name:'', email:'', password:'', phone:'', qualifications:'', subjects:'', years_experience:'', message:'', class_id:'', grade:'', date_of_birth:'', gender:'', guardian_name:'', guardian_phone:'', previous_school:'' })
@@ -80,6 +81,20 @@ export default function SchoolJoin() {
         <div className="school-join-security"><ShieldCheck size={17}/><span>Your password is private. It is never shown to school staff.</span></div>
       </div>
       <section className="school-join-form-card">
+        {mode === 'choice' ? <div className="school-join-choice">
+          <span className="school-join-choice-kicker">YOUR SCHOOL ACCOUNT</span>
+          <h2>How would you like to continue?</h2>
+          <p>Choose sign in if your school has already given you an account. If this is your first time, register and send your details to the school for review.</p>
+          <Link to={'/login?school=' + encodeURIComponent(slug)} className="school-join-choice-login"><span><LogIn size={21}/></span><span><strong>I already have an account</strong><small>Sign in with your registered email and password.</small></span><ArrowRight size={18}/></Link>
+          <div className="school-join-choice-divider"><span>FIRST TIME HERE?</span></div>
+          <h3>Create a school account</h3>
+          <div className="school-join-choice-register">
+            <button type="button" onClick={()=>{setRole('teacher');setMode('register');setError('')}}><span><BookOpen size={22}/></span><strong>Register as a teacher</strong><small>Share your professional and contact details for headmaster review.</small><em>Continue <ArrowRight size={15}/></em></button>
+            <button type="button" onClick={()=>{setRole('student');setMode('register');setError('')}}><span><GraduationCap size={22}/></span><strong>Register as a learner</strong><small>Provide your learner and guardian details for class-teacher approval.</small><em>Continue <ArrowRight size={15}/></em></button>
+          </div>
+          <p className="school-join-choice-note"><ShieldCheck size={15}/> Profile photos are optional. Passwords stay private and accounts only become active after approval.</p>
+        </div> : <>
+        <div className="school-join-register-top"><button type="button" onClick={()=>{setMode('choice');setError('');setSuccess('')}}><ArrowLeft size={15}/> Back</button><span>NEW SCHOOL ACCOUNT</span><Link to={'/login?school=' + encodeURIComponent(slug)}>Already registered? Sign in</Link></div>
         <div className="school-join-role-switch">
           <button type="button" className={role==='teacher'?'active':''} onClick={()=>{setRole('teacher');setError('');setSuccess('')}}><UserRound size={17}/> Register as a teacher</button>
           <button type="button" className={role==='student'?'active':''} onClick={()=>{setRole('student');setError('');setSuccess('')}}><GraduationCap size={17}/> Register as a learner</button>
@@ -108,6 +123,7 @@ export default function SchoolJoin() {
           {role==='student'&&!data.classes.length&&<p className="school-join-no-classes">This school has not published its classes yet. Please contact the school office.</p>}
           <p className="school-join-terms">By submitting, you confirm that the information is accurate and may be reviewed by authorised school staff. Passwords remain private.</p>
         </form>}
+        </>}
       </section>
     </section>
     <footer className="school-join-footer">© {new Date().getFullYear()} SmartSchola · Schools. Families. Futures.</footer>
