@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Camera, CheckCircle2, GraduationCap, LoaderCircle, School, ShieldCheck, UserRound, LogIn, UserPlus, BookOpen } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Camera, CheckCircle2, GraduationCap, LoaderCircle, School, ShieldCheck, UserRound, LogIn, BookOpen } from 'lucide-react'
 import { apiRequest } from '../lib/api.js'
 
 const readImage = file => new Promise((resolve, reject) => {
@@ -70,7 +70,7 @@ export default function SchoolJoin() {
   return <main className="school-join-page">
     <header className="school-join-topbar">
       <Link to={'/s/' + slug} className="school-join-back"><ArrowLeft size={16}/> Back to school</Link>
-      <Link to="/" className="school-join-brand"><GraduationCap size={23}/> SmartSchola</Link>
+      <div className="school-join-top-actions"><Link to={'/login?school=' + encodeURIComponent(slug)} className="school-join-existing"><LogIn size={16}/> Already have an account? Sign in</Link><Link to="/" className="school-join-brand"><GraduationCap size={23}/> SmartSchola</Link></div>
     </header>
     <section className="school-join-shell">
       <div className="school-join-intro">
