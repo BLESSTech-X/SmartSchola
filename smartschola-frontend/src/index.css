@@ -1077,3 +1077,64 @@ body { background: var(--ss-page); color: var(--ss-ink); }
 .school-crest-mark img{width:100%;height:100%;object-fit:contain;padding:4px;border-radius:inherit;background:#fff}
 .school-news-image{background-size:cover;background-position:center}
 @media(max-width:767px){.website-list-editor>div{flex-wrap:wrap}.website-list-editor button{width:100%}}
+
+
+/* Public school joining and recruitment */
+.school-join-page{min-height:100vh;background:#f4f7fb;color:#172b46;padding:0 22px 30px}
+.school-join-topbar{max-width:1120px;margin:auto;height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #dce5ef}
+.school-join-back,.school-join-brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#52647a;font-weight:700;font-size:13px}
+.school-join-brand{color:#12345b;font-size:18px}.school-join-brand svg{color:#d3a84c}
+.school-join-shell{max-width:1120px;margin:44px auto;display:grid;grid-template-columns:.82fr 1.18fr;gap:48px;align-items:start}
+.school-join-intro{position:sticky;top:32px;padding:22px 8px}
+.school-join-kicker{display:inline-flex;align-items:center;gap:8px;color:#b18432;font-size:11px;font-weight:900;letter-spacing:1.5px}
+.school-join-school-mark{width:76px;height:76px;border-radius:22px;background:#e5edf7;color:#1c4776;display:grid;place-items:center;margin:30px 0 20px;overflow:hidden}
+.school-join-school-mark img{width:100%;height:100%;object-fit:contain}
+.school-join-intro h1{font-size:clamp(32px,4vw,48px);line-height:1.08;letter-spacing:-1.5px;color:#132b49;margin:0 0 16px}
+.school-join-intro h1 span{color:#b48636}.school-join-intro>p{font-size:15px;line-height:1.8;color:#617187;max-width:430px}
+.school-join-security{display:flex;gap:10px;align-items:center;margin-top:32px;padding:14px 16px;border:1px solid #dce8e1;border-radius:14px;background:#f0f8f3;color:#286247;font-size:13px;font-weight:650;max-width:430px}
+.school-join-form-card{background:white;border:1px solid #e1e8f0;border-radius:22px;box-shadow:0 20px 55px #1c365015;overflow:hidden}
+.school-join-role-switch{display:grid;grid-template-columns:1fr 1fr;background:#f5f8fc;padding:8px;gap:8px}
+.school-join-role-switch button{border:0;border-radius:12px;background:transparent;padding:13px 8px;display:flex;align-items:center;justify-content:center;gap:8px;color:#617187;font-size:13px;font-weight:800;cursor:pointer}
+.school-join-role-switch button.active{background:white;color:#173b66;box-shadow:0 3px 12px #18395b18}
+.school-join-form{padding:28px 32px 30px;display:grid;gap:15px}
+.school-join-form-heading h2{font-size:23px;color:#173353;margin:0 0 6px}.school-join-form-heading p{margin:0 0 5px;color:#748398;font-size:13px;line-height:1.6}
+.school-join-form label{display:grid;gap:7px;color:#314761;font-size:12px;font-weight:750}
+.school-join-form input,.school-join-form select,.school-join-form textarea{width:100%;min-width:0;border:1px solid #d9e2ec;border-radius:10px;background:#fbfcfe;color:#1d334e;padding:12px 13px;font:inherit;font-size:14px;outline:none}
+.school-join-form input:focus,.school-join-form select:focus,.school-join-form textarea:focus{border-color:#5486bc;box-shadow:0 0 0 3px #5285bc1b}
+.school-join-form label small{color:#8492a3;font-size:11px;font-weight:500}
+.school-join-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.school-join-photo{display:flex!important;align-items:center;gap:14px;padding:12px;border:1px dashed #cbd8e6;border-radius:13px;background:#f9fbfe}
+.school-join-photo-preview{width:58px;height:58px;border-radius:50%;background:#e6edf6;color:#56708e;display:grid;place-items:center;overflow:hidden;flex:none}
+.school-join-photo-preview img{width:100%;height:100%;object-fit:cover}.school-join-photo input{display:block;padding:0;border:0;background:none;font-size:12px;margin-top:5px}
+.school-join-submit{border:0;border-radius:11px;background:#173d68;color:white;display:flex;align-items:center;justify-content:center;gap:10px;padding:15px;font-size:14px;font-weight:850;cursor:pointer;margin-top:3px}
+.school-join-submit:disabled{opacity:.55;cursor:not-allowed}
+.school-join-terms,.school-join-no-classes{font-size:11px!important;line-height:1.6;color:#8996a6!important;margin:0}
+.school-join-error{padding:12px 14px;border-radius:10px;background:#fff1f0;color:#a13c35;font-size:13px}
+.school-join-success{text-align:center;padding:52px 32px;display:grid;justify-items:center;gap:12px;color:#246847}.school-join-success h2{margin:0;color:#173b5c}.school-join-success p{color:#65768b;max-width:440px;line-height:1.65}.school-join-next{padding:13px;background:#f1f7f3;border-radius:10px}.school-join-success button,.school-join-success a{border:0;background:#173d68;color:white;padding:11px 16px;border-radius:9px;text-decoration:none;font-weight:750;cursor:pointer}.school-join-success a{background:transparent;color:#315d88}
+.school-join-loading{min-height:65vh;display:flex;align-items:center;justify-content:center;gap:12px;color:#52647a}
+.school-join-card{max-width:500px;margin:14vh auto;background:white;border-radius:18px;padding:40px;text-align:center}.school-join-card a{color:#315d88;font-weight:800}.school-join-footer{text-align:center;color:#91a0b0;font-size:11px}
+.school-join-header-link{background:#edf5ff!important;color:#1b5487!important;border:1px solid #d6e7f7!important}
+.website-logo-upload{display:flex;align-items:center;gap:16px;padding:15px;border:1px dashed #c9d8e8;border-radius:13px;background:#f8fbff;margin:14px 0 18px}
+.website-logo-preview{width:68px;height:68px;border-radius:13px;background:#e8eff7;color:#56708e;display:grid;place-items:center;overflow:hidden;flex:none}
+.website-logo-preview img{width:100%;height:100%;object-fit:contain}.website-logo-upload>div{display:grid;gap:7px}.website-logo-upload strong{color:#243d59;font-size:13px}.website-logo-upload small{color:#7d8b9d;font-size:11px;line-height:1.5}
+.website-logo-button{display:inline-flex!important;align-items:center;gap:7px;width:max-content;background:#173d68;color:white!important;border-radius:8px;padding:9px 12px;font-size:12px!important;font-weight:800;cursor:pointer}.website-logo-button input{display:none}
+.website-logo-remove{width:max-content;border:0;background:transparent;color:#a44b46;font-size:12px;font-weight:750;cursor:pointer}
+.teacher-recruitment-panel,.teacher-notice-panel,.teacher-student-overview{margin-top:22px}
+.teacher-applicant-list{display:grid;gap:12px}.teacher-applicant-card{padding:16px;border:1px solid #e0e8f0;border-radius:13px;background:#fbfcfe}
+.teacher-applicant-person{display:flex;align-items:center;gap:13px}.teacher-applicant-person>span{width:48px;height:48px;border-radius:50%;background:#e7eef7;display:grid;place-items:center;overflow:hidden;color:#42678d;flex:none}.teacher-applicant-person>span img{width:100%;height:100%;object-fit:cover}
+.teacher-applicant-person>div{display:grid;gap:4px;min-width:0;flex:1}.teacher-applicant-person strong{color:#203b58;font-size:14px}.teacher-applicant-person small{color:#718196;font-size:11px;overflow-wrap:anywhere}
+.teacher-application-state{font-style:normal;font-size:10px;text-transform:capitalize;font-weight:850;border-radius:20px;padding:6px 9px;background:#edf2f8;color:#60748a}.teacher-application-state.pending{background:#fff5df;color:#9a6c18}.teacher-application-state.active,.teacher-application-state.approved{background:#eaf7ef;color:#26744a}.teacher-application-state.suspended,.teacher-application-state.rejected{background:#fff0ef;color:#a3453f}
+.teacher-applicant-message{margin:12px 0 0;padding:11px 13px;background:#f2f6fa;border-radius:9px;color:#61738a;font-size:12px;line-height:1.6}
+.teacher-applicant-actions,.learner-request-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}.teacher-applicant-actions button,.learner-request-actions button{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer}.teacher-applicant-actions button.approve,.learner-request-actions button.approve{background:#e8f5ec;color:#267047}.teacher-applicant-actions button.reject,.learner-request-actions button.reject{background:#fff0ef;color:#a3443e}
+.teacher-notice-panel form{display:grid;gap:13px}.teacher-notice-panel form>label{display:grid;gap:7px;font-size:12px;font-weight:750;color:#344c66}.teacher-notice-panel input:not([type=radio]):not([type=checkbox]),.teacher-notice-panel textarea{width:100%;border:1px solid #dbe4ed;border-radius:9px;padding:11px 12px;background:#fbfcfe;color:#263e59}
+.teacher-notice-target{display:flex;gap:18px;flex-wrap:wrap}.teacher-notice-target label,.teacher-recipient-picker label{display:flex;align-items:center;gap:8px;font-size:12px;color:#52667d}
+.teacher-recipient-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;padding:12px;background:#f7f9fc;border-radius:10px}.teacher-recipient-picker label{padding:7px}.teacher-recipient-picker small{color:#8b98a8;overflow-wrap:anywhere}
+.teacher-notice-panel form>button{justify-self:start;border:0;border-radius:9px;background:#173d68;color:white;padding:11px 16px;font-weight:800;cursor:pointer}
+.teacher-clock-icon{font-size:24px;color:#b48a3f;line-height:1}
+.learner-request-notice{display:flex;gap:12px;align-items:center;padding:15px 17px;background:#eef5fc;border:1px solid #d9e7f4;border-radius:12px;color:#315b82;font-size:13px;line-height:1.6;margin-bottom:20px}
+.learner-request-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}.learner-request-card{background:white;border:1px solid #e1e8f0;border-radius:15px;padding:17px;box-shadow:0 8px 25px #17395b0a}
+.learner-request-person{display:flex;align-items:center;gap:11px}.learner-request-avatar{width:45px;height:45px;border-radius:50%;background:#eaf0f8;display:grid;place-items:center;overflow:hidden;color:#42678d}.learner-request-avatar img{width:100%;height:100%;object-fit:cover}.learner-request-person>div{display:grid;gap:4px;min-width:0;flex:1}.learner-request-person strong{font-size:14px;color:#203b58}.learner-request-person small{font-size:11px;color:#77869a;overflow-wrap:anywhere}
+.learner-request-status{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:#986b1a;background:#fff4df;border-radius:20px;padding:6px 8px}
+.learner-request-details{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.learner-request-details span{display:grid;gap:4px;min-width:0}.learner-request-details small{font-size:10px;color:#8492a2}.learner-request-details strong{font-size:12px;color:#334b65;overflow-wrap:anywhere}
+.learner-request-empty{text-align:center;padding:65px 20px;color:#8190a1}.learner-request-empty h2{font-size:18px;color:#2d4865}.learner-request-empty p{font-size:13px}
+@media(max-width:800px){.school-join-shell{grid-template-columns:1fr;gap:16px;margin:22px auto}.school-join-intro{position:static;padding:10px 3px}.school-join-school-mark{margin:18px 0 12px}.school-join-intro h1{font-size:34px}.school-join-form{padding:22px 18px}.school-join-two{grid-template-columns:1fr}.school-join-topbar{height:64px}.teacher-applicant-person{align-items:flex-start;flex-wrap:wrap}.teacher-applicant-person em{margin-left:60px}.learner-request-grid{grid-template-columns:1fr}}
