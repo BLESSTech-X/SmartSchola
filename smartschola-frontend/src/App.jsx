@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom'
+import { Menu, X } from 'lucide-react'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import Sidebar from './components/Sidebar.jsx'
@@ -19,6 +21,10 @@ import FeeTracker from './pages/FeeTracker.jsx'
 import SMS from './pages/SMS.jsx'
 import Settings from './pages/Settings.jsx'
 import PlatformAdmin from './pages/PlatformAdmin.jsx'
+import ProfileSettings from './pages/ProfileSettings.jsx'
+import TeacherManagement from './pages/TeacherManagement.jsx'
+import SchoolWebsite from './pages/SchoolWebsite.jsx'
+import Admissions from './pages/Admissions.jsx'
 
 const routeNames = {
   '/workspace': 'Dashboard',
@@ -30,11 +36,16 @@ const routeNames = {
   '/workspace/results': 'Academic results',
   '/workspace/fees': 'Fee management',
   '/workspace/sms': 'School communications',
-  '/workspace/settings': 'Workspace settings'
+  '/workspace/settings': 'Workspace settings',
+  '/workspace/profile': 'Profile settings',
+  '/workspace/teachers': 'Teacher management',
+  '/workspace/website': 'School website',
+  '/workspace/admissions': 'Admissions & recruitment'
 }
 
 function ProtectedLayout() {
   const { isAuthenticated, currentUser } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
   const role = currentUser?.role
   const isSchoolAdmin = ['headmaster', 'admin'].includes(role)
@@ -49,9 +60,19 @@ function ProtectedLayout() {
       <header className="workspace-topbar">
         <div><span className="workspace-topbar-kicker">SMARTSCHOLA · {role === 'teacher' ? 'TEACHING' : role === 'student' ? 'STUDENT' : role === 'parent' ? 'PARENT' : 'SCHOOL'} WORKSPACE</span><h1>{pageTitle}</h1></div>
         <div className="workspace-topbar-actions">
-          <span className="workspace-user-chip"><span>{(currentUser?.full_name || currentUser?.name || 'U').slice(0,1).toUpperCase()}</span><strong>{currentUser?.full_name || currentUser?.name || 'School user'}</strong><small>{role || 'Authorised user'}</small></span>
+          <button type="button" className="workspace-topbar-menu" onClick={()=>setMenuOpen(v=>!v)} aria-label="Open workspace menu" aria-expanded={menuOpen}>{menuOpen?<X size={18}/>:<Menu size={18}/>}</button>
+          <Link to="/workspace/profile" className="workspace-user-chip" aria-label="Open profile settings">
+            <span>{currentUser?.avatar_data?<img src={currentUser.avatar_data} alt=""/>:(currentUser?.full_name || 'U').slice(0,1).toUpperCase()}</span>
+            <small>{role || 'Authorised user'}</small>
+          </Link>
           <Link to="/" className="workspace-home-link">Public site ↗</Link>
         </div>
+        {menuOpen&&<nav className="workspace-header-menu-panel">
+          <Link onClick={()=>setMenuOpen(false)} to="/workspace">Dashboard</Link>
+          {isSchoolAdmin&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/students">Students</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/admissions">Admissions</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/teachers">Teachers</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/classes">Classes</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/website">School website</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/settings">Settings</Link></>}
+          {isTeachingStaff&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/marks">Marks</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/results">Results</Link></>}
+          <Link onClick={()=>setMenuOpen(false)} to="/workspace/profile">Profile settings</Link>
+        </nav>}
       </header>
       <div className="page-content">
         <Routes>
@@ -65,6 +86,10 @@ function ProtectedLayout() {
           <Route path="fees" element={isSchoolAdmin ? <FeeTracker/> : <Navigate to="/workspace" replace/>}/>
           <Route path="sms" element={isSchoolAdmin ? <SMS/> : <Navigate to="/workspace" replace/>}/>
           <Route path="settings" element={isSchoolAdmin ? <Settings/> : <Navigate to="/workspace" replace/>}/>
+          <Route path="profile" element={<ProfileSettings/>}/>
+          <Route path="teachers" element={isSchoolAdmin ? <TeacherManagement/> : <Navigate to="/workspace" replace/>}/>
+          <Route path="website" element={isSchoolAdmin ? <SchoolWebsite/> : <Navigate to="/workspace" replace/>}/>
+          <Route path="admissions" element={isSchoolAdmin ? <Admissions/> : <Navigate to="/workspace" replace/>}/>
           <Route path="*" element={<Navigate to="/workspace" replace/>}/>
         </Routes>
       </div>
