@@ -1,111 +1,102 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, BookOpen as BookOpenIcon, Wallet, AlertCircle, MessageSquare, Plus, ClipboardList, LayoutDashboard, ArrowUpRight, CalendarDays, Sparkles, ChevronRight } from 'lucide-react'
+import { Users, BookOpen, Wallet, MessageSquare, Plus, ClipboardList, CalendarDays, Sparkles, ChevronRight, ArrowUpRight, Clock3 } from 'lucide-react'
 import StatCard from '../components/StatCard.jsx'
-import EmptyState from '../components/EmptyState.jsx'
-import PageHeader from '../components/PageHeader.jsx'
 import { apiRequest } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { TeacherDashboard, StudentDashboard, ParentDashboard } from './RoleDashboards.jsx'
 
+const money = value => `K${Number(value || 0).toLocaleString('en-ZM',{minimumFractionDigits:2,maximumFractionDigits:2})}`
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [academicOverview, setAcademicOverview] = useState({ currentYear: null, totalClasses: 0 })
+  const [students, setStudents] = useState(0)
+  const [classes, setClasses] = useState(0)
+  const [currentYear, setCurrentYear] = useState(null)
+  const [fees, setFees] = useState(null)
+  const [smsToday, setSmsToday] = useState(null)
+  const [messages, setMessages] = useState([])
   const navigate = useNavigate()
   const { addToast } = useToast()
   const { currentUser } = useAuth()
-  const schoolId = currentUser?.school_id
+  const role = currentUser?.role
 
   useEffect(() => {
+    if (role === 'teacher' || role === 'student' || role === 'parent') return
     let active = true
-    if (!schoolId) {
-      setStats({ total_students: 0, recent_activity: [] })
+    const load = async () => {
+      const [studentResult, classResult, yearResult, feeResult, smsResult] = await Promise.allSettled([
+        apiRequest('/api/students'),
+        apiRequest('/api/classes'),
+        apiRequest('/api/academic-years'),
+        apiRequest('/api/fees?page=1&per_page=1'),
+        apiRequest('/api/sms/log?per_page=100')
+      ])
+      if (!active) return
+      let coreFailures = 0
+      if (studentResult.status === 'fulfilled') setStudents((studentResult.value.students || []).filter(item => item.status === 'active').length)
+      else coreFailures++
+      if (classResult.status === 'fulfilled') setClasses((classResult.value.classes || []).length)
+      else coreFailures++
+      if (yearResult.status === 'fulfilled') setCurrentYear((yearResult.value.academic_years || []).find(item => item.is_current) || null)
+      else coreFailures++
+      if (feeResult.status === 'fulfilled') setFees(feeResult.value.summary || null)
+      if (smsResult.status === 'fulfilled') {
+        const logs = smsResult.value.logs || []
+        setMessages(logs.slice(0,5))
+        const today = new Date().toLocaleDateString('en-CA')
+        setSmsToday(logs.filter(item => item.status === 'sent' && item.sent_at && new Date(item.sent_at).toLocaleDateString('en-CA') === today).length)
+      }
+      if (coreFailures === 3) addToast('The school overview could not load. Please refresh or check your connection.', 'error')
       setLoading(false)
-      addToast('Your account is not linked to a school. Please sign in again.', 'error')
-      return () => { active = false }
     }
-    Promise.all([apiRequest('/api/students'), apiRequest('/api/classes'), apiRequest('/api/academic-years')])
-      .then(([studentsResult, classesResult, yearsResult]) => {
-        if (!active) return
-        setStats({ total_students: (studentsResult.students || []).filter(s => s.status === 'active').length, recent_activity: [] })
-        setAcademicOverview({
-          currentYear: (yearsResult.academic_years || []).find(y => y.is_current) || null,
-          totalClasses: (classesResult.classes || []).length
-        })
-      })
-      .catch(err => { if (active) addToast(err.message || 'Could not load the school dashboard', 'error') })
-      .finally(() => { if (active) setLoading(false) })
+    load().catch(error => { if (active) { addToast(error.message || 'Could not load the school overview.', 'error'); setLoading(false) } })
     return () => { active = false }
-  }, [schoolId])
+  }, [role])
+
+  if (role === 'teacher') return <TeacherDashboard/>
+  if (role === 'student') return <StudentDashboard/>
+  if (role === 'parent') return <ParentDashboard/>
 
   const quickActions = [
-    { label: 'Add student', detail: 'Create a student profile', icon: Plus, path: '/workspace/students', tone: 'navy' },
-    { label: 'Enter marks', detail: 'Update assessment scores', icon: ClipboardList, path: '/workspace/marks', tone: 'green' },
-    { label: 'Record payment', detail: 'Track school fees', icon: Wallet, path: '/workspace/fees', tone: 'blue' },
-    { label: 'Send SMS', detail: 'Contact parents', icon: MessageSquare, path: '/workspace/sms', tone: 'purple' },
+    { label: 'Add a student', detail: 'Register a learner profile', icon: Plus, path: '/workspace/students', tone: 'navy' },
+    { label: 'Enter marks', detail: 'Record assessment scores', icon: ClipboardList, path: '/workspace/marks', tone: 'green' },
+    { label: 'Record a payment', detail: 'Manage school fee records', icon: Wallet, path: '/workspace/fees', tone: 'blue' },
+    { label: 'Send a message', detail: 'Communicate with parents', icon: MessageSquare, path: '/workspace/sms', tone: 'purple' },
   ]
 
-  return (
-    <div className="dashboard-page">
-      <div className="dashboard-welcome">
-        <div>
-          <div className="eyebrow"><Sparkles size={13}/> SCHOOL OVERVIEW</div>
-          <h1>Good to see you.</h1>
-          <p>Here’s what’s happening with your school today.</p>
-        </div>
-        <div className="dashboard-date"><CalendarDays size={16}/><span>{new Date().toLocaleDateString('en-ZM',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span></div>
-      </div>
-
-      <div className="dashboard-stat-grid">
-        <StatCard loading={loading} icon={Users} label="Total students" value={stats?.total_students ?? '—'} sub="Currently enrolled" color="#214A82" />
-        <StatCard loading={loading} icon={Wallet} label="Fees collected" value="Not connected" sub="Fees module migration pending" color="#16866B" />
-        <StatCard loading={loading} icon={AlertCircle} label="Outstanding fees" value="Not connected" sub="Fees module migration pending" color="#C65B42" />
-        <StatCard loading={loading} icon={MessageSquare} label="SMS sent today" value="Not connected" sub="Communications module migration pending" color="#7655B5" />
-      </div>
-
-      <section className="mb-6 grid gap-4 md:grid-cols-2">
-        <button type="button" onClick={() => navigate('/workspace/academic-years')} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:border-amber-200 hover:shadow-md">
-          <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><CalendarDays size={21}/></span><div><p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Current academic year</p><p className="mt-1 font-semibold text-gray-900">{loading ? 'Loading…' : academicOverview.currentYear?.name || 'Not set'}</p><p className="mt-1 text-xs text-gray-500">{academicOverview.currentYear ? [academicOverview.currentYear.starts_on, academicOverview.currentYear.ends_on].filter(Boolean).join(' to ') || 'Dates not set' : 'Set the active school year'}</p></div></div>
-          <ArrowUpRight size={18} className="shrink-0 text-gray-400"/>
-        </button>
-        <button type="button" onClick={() => navigate('/workspace/classes')} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md">
-          <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><BookOpenIcon/></span><div><p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Classes and streams</p><p className="mt-1 font-semibold text-gray-900">{loading ? 'Loading…' : academicOverview.totalClasses}</p><p className="mt-1 text-xs text-gray-500">Manage classes and academic-year assignments</p></div></div>
-          <ArrowUpRight size={18} className="shrink-0 text-gray-400"/>
-        </button>
-      </section>
-
-      <div className="dashboard-content-grid">
-        <section className="dashboard-panel quick-panel">
-          <div className="section-heading">
-            <div><h2>Quick actions</h2><p>Common tasks, one tap away</p></div>
-          </div>
-          <div className="quick-action-list">
-            {quickActions.map(({ label, detail, icon: Icon, path, tone }) => (
-              <button key={label} className="quick-action" onClick={() => navigate(path)}>
-                <span className={`quick-action-icon ${tone}`}><Icon size={19}/></span>
-                <span className="quick-action-copy"><strong>{label}</strong><small>{detail}</small></span>
-                <ChevronRight className="quick-action-arrow" size={17}/>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="dashboard-panel activity-panel">
-          <div className="section-heading">
-            <div><h2>Recent activity</h2><p>A snapshot of recent system activity</p></div>
-            <span className="live-indicator"><span/> Latest</span>
-          </div>
-          {!loading && (!stats?.recent_activity || stats.recent_activity.length === 0) ? (
-            <EmptyState icon={LayoutDashboard} title="Activity tracking is being connected" description="Recent school actions will appear here when the activity module is completed." />
-          ) : loading ? (
-            <div className="activity-loading"><span/><span/><span/></div>
-          ) : (
-            <EmptyState icon={LayoutDashboard} title="Activity tracking is being connected" description="Recent school actions will appear here when the activity module is completed." />
-          )}
-        </section>
-      </div>
+  return <div className="dashboard-page">
+    <div className="dashboard-welcome">
+      <div><div className="eyebrow"><Sparkles size={13}/> SCHOOL OVERVIEW</div><h1>Good to see you, {(currentUser?.full_name || currentUser?.name || 'School leader').split(' ')[0]}.</h1><p>Your school's key numbers and the actions that need your attention.</p></div>
+      <div className="dashboard-date"><CalendarDays size={16}/><span>{new Date().toLocaleDateString('en-ZM',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span></div>
     </div>
-  )
+
+    <div className="dashboard-stat-grid">
+      <StatCard loading={loading} icon={Users} label="Active students" value={students.toLocaleString()} sub="Currently enrolled learners" color="#214A82"/>
+      <StatCard loading={loading} icon={Wallet} label="Fees collected" value={fees ? money(fees.total_collected) : '—'} sub={fees ? 'Recorded payments' : 'Fee summary unavailable'} color="#16866B"/>
+      <StatCard loading={loading} icon={Wallet} label="Outstanding fees" value={fees ? money(fees.outstanding) : '—'} sub={fees ? 'Remaining invoice balances' : 'Fee summary unavailable'} color="#C65B42"/>
+      <StatCard loading={loading} icon={MessageSquare} label="SMS sent today" value={smsToday === null ? '—' : smsToday.toLocaleString()} sub={smsToday === null ? 'Message summary unavailable' : 'Successfully sent messages'} color="#7655B5"/>
+    </div>
+
+    <section className="dashboard-overview-strip">
+      <button type="button" onClick={() => navigate('/workspace/academic-years')} className="dashboard-overview-card">
+        <span className="dashboard-overview-icon gold"><CalendarDays size={20}/></span><span className="dashboard-overview-copy"><small>Current academic year</small><strong>{loading ? 'Loading…' : currentYear?.name || 'Not set'}</strong><em>{currentYear ? [currentYear.starts_on,currentYear.ends_on].filter(Boolean).join(' – ') || 'Dates not set' : 'Set the active school year'}</em></span><ArrowUpRight size={18}/>
+      </button>
+      <button type="button" onClick={() => navigate('/workspace/classes')} className="dashboard-overview-card">
+        <span className="dashboard-overview-icon blue"><BookOpen size={20}/></span><span className="dashboard-overview-copy"><small>Classes and streams</small><strong>{loading ? 'Loading…' : classes.toLocaleString()}</strong><em>Manage class and year assignments</em></span><ArrowUpRight size={18}/>
+      </button>
+    </section>
+
+    <div className="dashboard-content-grid">
+      <section className="dashboard-panel quick-panel">
+        <div className="section-heading"><div><h2>Quick actions</h2><p>Important school tasks, one click away</p></div></div>
+        <div className="quick-action-list">{quickActions.map(({label,detail,icon:Icon,path,tone})=><button key={label} className="quick-action" onClick={()=>navigate(path)}><span className={`quick-action-icon ${tone}`}><Icon size={19}/></span><span className="quick-action-copy"><strong>{label}</strong><small>{detail}</small></span><ChevronRight className="quick-action-arrow" size={17}/></button>)}</div>
+      </section>
+      <section className="dashboard-panel activity-panel">
+        <div className="section-heading"><div><h2>Latest messages</h2><p>Recent SMS communication from your school</p></div><button className="dashboard-text-link" onClick={()=>navigate('/workspace/sms')}>Open SMS center <ArrowUpRight size={14}/></button></div>
+        {loading ? <div className="activity-loading"><span/><span/><span/></div> : messages.length ? <div className="dashboard-message-list">{messages.map(message=><article className="dashboard-message" key={message.id}><span className="dashboard-message-icon"><MessageSquare size={16}/></span><div><strong>{message.recipient_name || message.recipient_phone || 'Recipient'}</strong><p>{message.message}</p><small><Clock3 size={12}/>{message.sent_at ? new Date(message.sent_at).toLocaleString('en-ZM',{dateStyle:'medium',timeStyle:'short'}) : 'Time unavailable'}</small></div><em className={message.status === 'sent' ? 'sent' : 'failed'}>{message.status || 'Unknown'}</em></article>)}</div> : <div className="dashboard-no-messages"><MessageSquare size={23}/><strong>No messages to show yet</strong><span>Messages sent through the SMS center will appear here.</span></div>}
+      </section>
+    </div>
+  </div>
 }
