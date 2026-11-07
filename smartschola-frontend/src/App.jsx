@@ -25,6 +25,7 @@ import ProfileSettings from './pages/ProfileSettings.jsx'
 import TeacherManagement from './pages/TeacherManagement.jsx'
 import SchoolWebsite from './pages/SchoolWebsite.jsx'
 import Admissions from './pages/Admissions.jsx'
+import PublicAdmissions from './pages/PublicAdmissions.jsx'
 
 const routeNames = {
   '/workspace': 'Dashboard',
@@ -101,6 +102,7 @@ export default function App() {
   return <BrowserRouter><AuthProvider><ToastProvider><Routes>
     <Route path="/" element={<Landing/>}/>
     <Route path="/s/:slug" element={<SchoolProfile/>}/>
+    <Route path="/apply/:slug" element={<PublicAdmissions/>}/>
     <Route path="/school-sign-in" element={<SchoolSignIn/>}/>
     <Route path="/register-school" element={<SchoolRegistration/>}/>
     <Route path="/login" element={<Login/>}/>
