@@ -25,23 +25,24 @@ export function TeacherDashboard() {
 
   useEffect(() => {
     let active = true
-    Promise.all([
+    Promise.allSettled([
       apiRequest('/api/classes'),
       apiRequest('/api/students'),
       apiRequest('/api/assessments'),
       apiRequest('/api/attendance/sessions'),
       apiRequest('/api/notifications')
-    ]).then(([classes, students, assessments, attendance, notifications]) => {
+    ]).then(results => {
       if (!active) return
+      const values = results.map(result => result.status === 'fulfilled' ? result.value : {})
       setData({
-        classes: classes.classes || [],
-        students: students.students || [],
-        assessments: assessments.assessments || [],
-        attendance: attendance.sessions || [],
-        notifications: notifications.notifications || []
+        classes: values[0].classes || [],
+        students: values[1].students || [],
+        assessments: values[2].assessments || [],
+        attendance: values[3].sessions || [],
+        notifications: values[4].notifications || []
       })
-    }).catch(error => { if (active) addToast(error.message || 'Teaching overview could not be loaded.', 'error') })
-      .finally(() => { if (active) setLoading(false) })
+      if (results.some(result => result.status === 'rejected')) addToast('Some teaching information is temporarily unavailable. Other sections remain accessible.', 'warning')
+    }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [])
 
