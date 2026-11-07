@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck, UserRound, BookOpen, BriefcaseBusiness } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, EyeOff, GraduationCap, LockKeyhole, ShieldCheck, UserRound, BookOpen, BriefcaseBusiness } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { apiRequest, apiConfigured } from '../lib/api.js'
 
@@ -111,7 +111,7 @@ export default function Login() {
             <button className="login-submit" type="submit" disabled={loading || schoolLoading || !school}>{loading ? 'Checking your school access…' : <><LockKeyhole size={17}/> Continue as {selectedRole.label}</>}</button>
           </form>
           <div className="login-security-note"><ShieldCheck size={17}/><span>Only your selected school's authorised accounts can sign in here. Your school membership is checked before workspace access is granted.</span></div>
-          <p className="login-register-prompt">First time joining this school? <Link to={'/join/' + encodeURIComponent(school.slug)}>Register a new account <ArrowRight size={14}/></Link></p>
+          <p className="login-register-prompt">First time joining this school? <Link to={'/join/' + encodeURIComponent(schoolSlug)}>Register a new account <ArrowRight size={14}/></Link></p>
           <p className="login-help">If you cannot access your account, contact your school headmaster for assistance. Never share your password with another person.</p>
         </div>
       </main>
