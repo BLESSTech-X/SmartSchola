@@ -1143,3 +1143,6 @@ body { background: var(--ss-page); color: var(--ss-ink); }
 .school-directory-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.school-directory-view{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d5e2ef;border-radius:9px;padding:10px 12px;color:#315b82;text-decoration:none;font-size:12px;font-weight:800;background:#f7faff}
 .role-notifications-panel{margin-top:18px}.role-notification-count{font-size:11px;font-weight:800;color:#276847;background:#eaf6ee;padding:6px 9px;border-radius:20px}.role-notification-read{border:1px solid #d6e4f1;background:#f4f8fc;color:#315b82;padding:6px 9px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}
 .role-notifications-panel .role-record{align-items:flex-start}.role-notifications-panel .role-record>div{min-width:0;flex:1}.role-notifications-panel .role-record small{white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+
+
+.teacher-manual-photo-preview{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid #e5edf6;margin:2px 0 8px}
