@@ -225,6 +225,8 @@ CREATE TABLE IF NOT EXISTS school_settings (
   address TEXT,
   website TEXT,
   branding_json TEXT NOT NULL DEFAULT '{}',
+  sms_provider TEXT NOT NULL DEFAULT 'africas_talking',
+  sms_sender_id TEXT NOT NULL DEFAULT 'SmartSchola',
   updated_by TEXT REFERENCES users(id),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
