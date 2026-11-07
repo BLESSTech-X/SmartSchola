@@ -93,7 +93,7 @@ export default function SchoolProfile() {
     <header className="school-brand-header">
       <Link to="/" className="school-back-community"><ArrowLeft size={15}/> School community</Link>
       <div className="school-crest"><span className={`school-crest-mark ${school.initials.toLowerCase()}`}>{school.logo_data?<img src={school.logo_data} alt="School logo"/>:<GraduationCap size={34}/>}</span><span className="school-crest-copy"><strong>{school.name}</strong><small>{school.motto}</small></span></div>
-      {liveData?.content?.admissions_open && <Link to={`/apply/${slug}`} className="school-header-portal"><GraduationCap size={16}/> Apply for admission <ArrowRight size={15}/></Link>}<Link to={`/login?school=${slug}`} className="school-header-portal"><ShieldCheck size={16}/> Portal sign in <ArrowRight size={15}/></Link>
+      {liveData?.content?.admissions_open && <Link to={`/apply/${slug}`} className="school-header-portal"><GraduationCap size={16}/> Apply for admission <ArrowRight size={15}/></Link>}<Link to={`/join/${slug}`} className="school-header-portal school-join-header-link"><Users size={16}/> Join this school <ArrowRight size={15}/></Link><Link to={`/login?school=${slug}`} className="school-header-portal"><ShieldCheck size={16}/> Portal sign in <ArrowRight size={15}/></Link>
       <button className="school-mobile-menu-toggle" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close school menu' : 'Open school menu'}>{menuOpen ? <X/> : <Menu/>}</button>
     </header>
     <nav className={`school-main-nav ${menuOpen ? 'open' : ''}`} aria-label="School sections">
