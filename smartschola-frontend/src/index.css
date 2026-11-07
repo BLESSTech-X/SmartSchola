@@ -1183,3 +1183,17 @@ body { background: var(--ss-page); color: var(--ss-ink); }
 .login-register-prompt{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;color:#77869a;font-size:12px;margin:16px 0 4px}
 .login-register-prompt a{display:inline-flex;align-items:center;gap:4px;color:#1b5487;text-decoration:none;font-weight:800}
 @media(max-width:767px){.school-join-top-actions{gap:8px}.school-join-existing{font-size:10px;padding:8px}.school-join-brand{font-size:15px}.school-join-choice{padding:23px 18px}.school-join-choice h2{font-size:22px}.school-join-choice-register{grid-template-columns:1fr}.school-join-register-top{padding:10px 12px;flex-wrap:wrap}.school-join-register-top span{display:none}.school-join-form{padding:22px 18px}.school-join-shell{margin:22px auto;gap:18px}}
+
+
+/* Single-screen login and role-based registration */
+.login-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:6px;margin:18px 0 17px;border:1px solid #e2e9f1;border-radius:13px;background:#f4f7fb}
+.login-mode-switch button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:43px;padding:10px 8px;border:0;border-radius:9px;background:transparent;color:#64758a;font-size:12px;font-weight:850;cursor:pointer}
+.login-mode-switch button.active{background:#173d68;color:#fff;box-shadow:0 4px 12px #173d6826}
+.login-inline-register{padding:18px 0 4px!important;gap:13px!important}
+.login-inline-register .school-join-form-heading h2{font-size:20px}
+.login-inline-register .school-join-two{gap:10px}
+.login-inline-register .school-join-photo{margin:1px 0}
+.login-inline-register .school-join-submit{width:100%;min-height:48px}
+.login-inline-success{padding:34px 22px!important}
+.login-inline-success button{cursor:pointer}
+@media(max-width:767px){.login-mode-switch button{font-size:11px}.login-inline-register{padding-top:12px!important}.login-inline-register .school-join-two{grid-template-columns:1fr}}
