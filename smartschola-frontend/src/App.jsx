@@ -26,6 +26,8 @@ import TeacherManagement from './pages/TeacherManagement.jsx'
 import SchoolWebsite from './pages/SchoolWebsite.jsx'
 import Admissions from './pages/Admissions.jsx'
 import PublicAdmissions from './pages/PublicAdmissions.jsx'
+import SchoolJoin from './pages/SchoolJoin.jsx'
+import LearnerRequests from './pages/LearnerRequests.jsx'
 
 const routeNames = {
   '/workspace': 'Dashboard',
@@ -41,7 +43,8 @@ const routeNames = {
   '/workspace/profile': 'Profile settings',
   '/workspace/teachers': 'Teacher management',
   '/workspace/website': 'School website',
-  '/workspace/admissions': 'Admissions & recruitment'
+  '/workspace/admissions': 'Admissions & recruitment',
+  '/workspace/learner-requests': 'Learner registration requests'
 }
 
 function ProtectedLayout() {
@@ -71,7 +74,7 @@ function ProtectedLayout() {
         {menuOpen&&<nav className="workspace-header-menu-panel">
           <Link onClick={()=>setMenuOpen(false)} to="/workspace">Dashboard</Link>
           {isSchoolAdmin&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/students">Students</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/admissions">Admissions</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/teachers">Teachers</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/classes">Classes</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/website">School website</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/settings">Settings</Link></>}
-          {isTeachingStaff&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/marks">Marks</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/results">Results</Link></>}
+          {isTeachingStaff&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/marks">Marks</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/results">Results</Link></>}{role==='teacher'&&<Link onClick={()=>setMenuOpen(false)} to="/workspace/learner-requests">Learner requests</Link>}
           <Link onClick={()=>setMenuOpen(false)} to="/workspace/profile">Profile settings</Link>
         </nav>}
       </header>
@@ -91,6 +94,7 @@ function ProtectedLayout() {
           <Route path="teachers" element={isSchoolAdmin ? <TeacherManagement/> : <Navigate to="/workspace" replace/>}/>
           <Route path="website" element={isSchoolAdmin ? <SchoolWebsite/> : <Navigate to="/workspace" replace/>}/>
           <Route path="admissions" element={isSchoolAdmin ? <Admissions/> : <Navigate to="/workspace" replace/>}/>
+          <Route path="learner-requests" element={role === "teacher" ? <LearnerRequests/> : <Navigate to="/workspace" replace/>}/>
           <Route path="*" element={<Navigate to="/workspace" replace/>}/>
         </Routes>
       </div>
@@ -103,6 +107,7 @@ export default function App() {
     <Route path="/" element={<Landing/>}/>
     <Route path="/s/:slug" element={<SchoolProfile/>}/>
     <Route path="/apply/:slug" element={<PublicAdmissions/>}/>
+    <Route path="/join/:slug" element={<SchoolJoin/>}/>
     <Route path="/school-sign-in" element={<SchoolSignIn/>}/>
     <Route path="/register-school" element={<SchoolRegistration/>}/>
     <Route path="/login" element={<Login/>}/>
