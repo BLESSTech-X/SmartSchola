@@ -3,11 +3,13 @@ import { Bell, BookOpen, Check, Copy, GraduationCap, RefreshCw, ShieldCheck, Use
 import PageHeader from '../components/PageHeader.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
 import { apiRequest } from '../lib/api.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 const readImage=file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})
 
 export default function TeacherManagement() {
   const { addToast } = useToast()
+  const { currentUser } = useAuth()
   const [teachers,setTeachers] = useState([])
   const [applications,setApplications] = useState([])
   const [studentRequests,setStudentRequests] = useState([])
@@ -76,7 +78,7 @@ export default function TeacherManagement() {
       <section className="teacher-panel"><h2><BookOpen/> Assign a class</h2><p>Connect active teachers to the classes they are responsible for.</p><form onSubmit={assign}><label>Teacher<select required value={assignment.membership_id} onChange={e=>setAssignment(v=>({...v,membership_id:e.target.value}))}><option value="">Choose teacher</option>{activeTeachers.map(t=><option key={t.membership_id} value={t.membership_id}>{t.full_name} · {t.role}</option>)}</select></label><label>Class<select required value={assignment.class_id} onChange={e=>setAssignment(v=>({...v,class_id:e.target.value}))}><option value="">Choose class</option>{classes.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><button disabled={!classes.length||!activeTeachers.length}>Save assignment</button></form></section>
     </div>
 
-    <section className="teacher-panel teacher-recruitment-panel"><div className="teacher-roster-heading"><div><h2><ShieldCheck/> Online teacher applications</h2><p>Applicants submit their own profile, photo and credentials. Approving activates their account without revealing their password.</p></div></div>
+    <section className="teacher-panel teacher-recruitment-panel"><div className="teacher-roster-heading"><div><h2><ShieldCheck/> Online teacher applications</h2><p>Applicants submit their own profile, photo and credentials. Approving activates their account without revealing their password.</p></div><button className="ss-secondary-action" type="button" onClick={()=>{const link=window.location.origin+'/join/'+currentUser?.school_slug;navigator.clipboard?.writeText(link).then(()=>addToast('School registration link copied. Share it with teachers and families.','success'))}}><Copy size={14}/>Copy school registration link</button></div>
       {loading?<div className="py-8 flex justify-center"><LoadingSpinner size={25}/></div>:applications.length===0?<p className="teacher-empty">No online teacher applications yet. Share the school's public registration link to invite teachers.</p>:<div className="teacher-applicant-list">{applications.map(item=><article className="teacher-applicant-card" key={item.membership_id}><div className="teacher-applicant-person"><span>{item.avatar_data?<img src={item.avatar_data} alt=""/>:<UserPlus size={22}/>}</span><div><strong>{item.full_name}</strong><small>{item.email} · {item.phone||'No phone supplied'}</small><small>{item.qualifications||'Qualifications not supplied'} · {item.subjects||'Subjects not supplied'} · {item.years_experience||0} years experience</small></div><em className={'teacher-application-state '+item.status}>{item.status}</em></div>{item.message&&<p className="teacher-applicant-message">{item.message}</p>}{item.status==='pending'&&<div className="teacher-applicant-actions"><button disabled={busy===item.membership_id} className="reject" onClick={()=>reviewTeacher(item,'suspended')}><X size={14}/>Decline</button><button disabled={busy===item.membership_id} className="approve" onClick={()=>reviewTeacher(item,'active')}><Check size={14}/>{busy===item.membership_id?'Saving…':'Approve teacher'}</button></div>}</article>)}</div>}
     </section>
 
