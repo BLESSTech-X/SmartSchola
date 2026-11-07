@@ -40,7 +40,7 @@ export default function SchoolSignIn() {
         {filtered.map(school => <article className="school-signin-card" key={school.id || school.slug}>
           <div className="school-signin-emblem blue"><School size={26}/><span>{school.name.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase()}</span></div>
           <div className="school-signin-details"><span className="school-signin-type">REGISTERED SCHOOL</span><h2>{school.name}</h2><p><MapPin size={14}/>{school.location || 'Location not provided'}</p></div>
-          <button type="button" className="school-signin-continue" onClick={() => navigate(`/login?school=${encodeURIComponent(school.slug)}`)}>Choose school <ArrowRight size={17}/></button>
+          <div className="school-directory-actions"><Link to={`/s/${school.slug}`} className="school-directory-view">View school & join</Link><button type="button" className="school-signin-continue" onClick={() => navigate(`/login?school=${encodeURIComponent(school.slug)}`)}>Sign in <ArrowRight size={17}/></button></div>
         </article>)}
         {filtered.length === 0 && <div className="school-signin-empty"><Search size={26}/><h2>{schools.length ? 'No matching school found' : 'No registered schools are available yet'}</h2><p>{schools.length ? 'Check the spelling or ask your school administrator to confirm the registered school name.' : 'School sign-in will appear here when schools are registered and activated. Do not use a sample profile to sign in.'}</p>{query && <button type="button" onClick={() => setQuery('')}>Clear search</button>}</div>}
       </div>}
