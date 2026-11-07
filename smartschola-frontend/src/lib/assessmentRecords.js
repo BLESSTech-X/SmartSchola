@@ -40,17 +40,17 @@ export async function saveAssessmentScores({schoolId,assessmentId,entries}) {
 }
 export async function listSchoolTeachers(schoolId) {
   ready(schoolId)
-  return (await apiRequest('/api/school-teachers')).teachers||[]
+  return ((await apiRequest('/api/teachers')).teachers||[]).map(t=>({...t,id:t.membership_id,login_identifier:t.email}))
 }
 export async function listClassTeacherAssignments(schoolId) {
   ready(schoolId)
-  return (await apiRequest('/api/class-teachers')).assignments||[]
+  return (await apiRequest('/api/teacher-assignments')).assignments||[]
 }
 export async function assignTeacherToClass({schoolId,classId,membershipId}) {
   ready(schoolId)
-  await apiRequest('/api/class-teachers',{method:'POST',body:JSON.stringify({class_id:classId,membership_id:membershipId})})
+  await apiRequest('/api/teacher-assignments',{method:'POST',body:JSON.stringify({class_id:classId,membership_id:membershipId})})
 }
 export async function removeTeacherAssignment({schoolId,assignmentId}) {
   ready(schoolId)
-  await apiRequest('/api/class-teachers/'+encodeURIComponent(assignmentId),{method:'DELETE'})
+  await apiRequest('/api/teacher-assignments/'+encodeURIComponent(assignmentId),{method:'DELETE'})
 }
