@@ -16,6 +16,8 @@ jobs:
           node-version: "20"
       - name: Check Worker JavaScript syntax
         run: node --check cloudflare/src/index.js
+      - name: Check frontend-to-Worker API contracts
+        run: node cloudflare/scripts/check-api-contracts.mjs
       - name: Check migration files are present
         run: |
           test -f cloudflare/migrations/0001_smartschola_core.sql
