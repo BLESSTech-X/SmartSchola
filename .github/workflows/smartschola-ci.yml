@@ -23,6 +23,7 @@ jobs:
           test -f cloudflare/migrations/0003_school_operations.sql
           test -f cloudflare/migrations/0004_settings_and_messaging.sql
           test -f cloudflare/migrations/0005_profiles_website_admissions.sql
+          test -f cloudflare/migrations/0006_recruitment_and_notifications.sql
 
   frontend:
     runs-on: ubuntu-latest
