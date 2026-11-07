@@ -4,6 +4,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import LoadingSpinner from '../components/LoadingSpinner.jsx'
 import { apiRequest } from '../lib/api.js'
 import { useToast } from '../context/ToastContext.jsx'
+const readImage=file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})
 
 export default function TeacherManagement() {
   const { addToast } = useToast()
@@ -13,7 +14,7 @@ export default function TeacherManagement() {
   const [classes,setClasses] = useState([])
   const [assignments,setAssignments] = useState([])
   const [selected,setSelected] = useState([])
-  const [form,setForm] = useState({full_name:'',email:''})
+  const [form,setForm] = useState({full_name:'',email:'',phone:'',qualifications:'',subjects:'',years_experience:'',avatar_data:''})
   const [assignment,setAssignment] = useState({membership_id:'',class_id:''})
   const [notice,setNotice] = useState({title:'',message:'',send_to_all:true})
   const [setup,setSetup] = useState('')
@@ -37,7 +38,7 @@ export default function TeacherManagement() {
 
   const invite = async e => {
     e.preventDefault(); setSaving(true); setSetup('')
-    try { const r=await apiRequest('/api/teachers',{method:'POST',body:JSON.stringify(form)});setSetup(r.setup_url);setForm({full_name:'',email:''});addToast('Manual teacher account created. Share the one-time setup link securely.','success');await load() }
+    try { const r=await apiRequest('/api/teachers',{method:'POST',body:JSON.stringify(form)});setSetup(r.setup_url);setForm({full_name:'',email:'',phone:'',qualifications:'',subjects:'',years_experience:'',avatar_data:''});addToast('Manual teacher account created. Share the one-time setup link securely.','success');await load() }
     catch(e){addToast(e.message||'Could not create teacher account.','error')} finally{setSaving(false)}
   }
   const toggle = async t => {
@@ -71,7 +72,7 @@ export default function TeacherManagement() {
     <div className="teacher-summary-grid"><div><Users/><strong>{activeTeachers.length}</strong><span>Active teaching staff</span></div><div><Clock3Icon/><strong>{pendingTeachers.length}</strong><span>Pending teacher applications</span></div><div><BookOpen/><strong>{assignments.length}</strong><span>Class assignments</span></div><div><GraduationCap/><strong>{studentRequests.filter(r=>r.status==='pending').length}</strong><span>Student requests awaiting teachers</span></div></div>
 
     <div className="teacher-management-columns">
-      <section className="teacher-panel"><h2><UserPlus/> Manual teacher entry</h2><p>For teachers entered by school leadership. They receive a one-time password setup link and create their own private password.</p><form onSubmit={invite}><label>Full name<input required value={form.full_name} onChange={e=>setForm(v=>({...v,full_name:e.target.value}))}/></label><label>Email address<input required type="email" value={form.email} onChange={e=>setForm(v=>({...v,email:e.target.value}))}/></label><button disabled={saving}>{saving?'Creating…':'Create teacher account'}</button></form>{setup&&<div className="teacher-setup-link"><strong>One-time setup link · expires in 24 hours</strong><span>{setup}</span><button type="button" onClick={()=>navigator.clipboard?.writeText(setup).then(()=>addToast('Setup link copied.','success'))}><Copy size={14}/>Copy link</button></div>}</section>
+      <section className="teacher-panel"><h2><UserPlus/> Manual teacher entry</h2><p>For teachers entered by school leadership. They receive a one-time password setup link and create their own private password.</p><form onSubmit={invite}><label>Teacher profile photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>250*1024){addToast('Choose a PNG, JPG or WebP photo under 250 KB.','warning');return}try{setForm(v=>({...v,avatar_data:await readImage(file)}))}catch{addToast('Could not read profile photo.','error')}}}/></label>{form.avatar_data&&<img className="teacher-manual-photo-preview" src={form.avatar_data} alt="Teacher profile preview"/>}<label>Full name<input required value={form.full_name} onChange={e=>setForm(v=>({...v,full_name:e.target.value}))}/></label><label>Email address<input required type="email" value={form.email} onChange={e=>setForm(v=>({...v,email:e.target.value}))}/></label><label>Phone number<input value={form.phone} onChange={e=>setForm(v=>({...v,phone:e.target.value}))}/></label><label>Qualifications<input value={form.qualifications} onChange={e=>setForm(v=>({...v,qualifications:e.target.value}))} placeholder="e.g. Diploma in Education"/></label><label>Subjects / specialisation<input value={form.subjects} onChange={e=>setForm(v=>({...v,subjects:e.target.value}))} placeholder="e.g. Mathematics, Science"/></label><label>Years of experience<input type="number" min="0" max="60" value={form.years_experience} onChange={e=>setForm(v=>({...v,years_experience:e.target.value}))}/></label><button disabled={saving}>{saving?'Creating…':'Create teacher account'}</button></form>{setup&&<div className="teacher-setup-link"><strong>One-time setup link · expires in 24 hours</strong><span>{setup}</span><button type="button" onClick={()=>navigator.clipboard?.writeText(setup).then(()=>addToast('Setup link copied.','success'))}><Copy size={14}/>Copy link</button></div>}</section>
       <section className="teacher-panel"><h2><BookOpen/> Assign a class</h2><p>Connect active teachers to the classes they are responsible for.</p><form onSubmit={assign}><label>Teacher<select required value={assignment.membership_id} onChange={e=>setAssignment(v=>({...v,membership_id:e.target.value}))}><option value="">Choose teacher</option>{activeTeachers.map(t=><option key={t.membership_id} value={t.membership_id}>{t.full_name} · {t.role}</option>)}</select></label><label>Class<select required value={assignment.class_id} onChange={e=>setAssignment(v=>({...v,class_id:e.target.value}))}><option value="">Choose class</option>{classes.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><button disabled={!classes.length||!activeTeachers.length}>Save assignment</button></form></section>
     </div>
 
