@@ -20,7 +20,7 @@ function DashboardLink({ to, icon: Icon, title, detail }) {
 export function TeacherDashboard() {
   const { currentUser } = useAuth()
   const { addToast } = useToast()
-  const [data, setData] = useState({ classes: [], students: [], assessments: [], attendance: [] })
+  const [data, setData] = useState({ classes: [], students: [], assessments: [], attendance: [], notifications: [] })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,14 +29,16 @@ export function TeacherDashboard() {
       apiRequest('/api/classes'),
       apiRequest('/api/students'),
       apiRequest('/api/assessments'),
-      apiRequest('/api/attendance/sessions')
-    ]).then(([classes, students, assessments, attendance]) => {
+      apiRequest('/api/attendance/sessions'),
+      apiRequest('/api/notifications')
+    ]).then(([classes, students, assessments, attendance, notifications]) => {
       if (!active) return
       setData({
         classes: classes.classes || [],
         students: students.students || [],
         assessments: assessments.assessments || [],
-        attendance: attendance.sessions || []
+        attendance: attendance.sessions || [],
+        notifications: notifications.notifications || []
       })
     }).catch(error => { if (active) addToast(error.message || 'Teaching overview could not be loaded.', 'error') })
       .finally(() => { if (active) setLoading(false) })
@@ -56,12 +58,14 @@ export function TeacherDashboard() {
       <section className="role-dashboard-panel"><div className="role-panel-heading"><div><h2>Teaching tools</h2><p>Continue with your most common tasks</p></div></div><div className="role-action-list">
         <DashboardLink to="/workspace/marks" icon={ClipboardList} title="Assessments & mark entry" detail="Create assessments and record learner scores"/>
         <DashboardLink to="/workspace/results" icon={Award} title="Academic results" detail="Review published learner performance"/>
+        <DashboardLink to="/workspace/learner-requests" icon={GraduationCap} title="Learner registration requests" detail="Review registrations for your assigned classes"/>
       </div></section>
       <section className="role-dashboard-panel"><div className="role-panel-heading"><div><h2>Recent assessments</h2><p>Your latest class assessment records</p></div><Link to="/workspace/marks">Open marks →</Link></div>
         {loading ? <p className="role-muted">Loading assessments…</p> : recentAssessments.length ? <div className="role-record-list">{recentAssessments.map(item => <div className="role-record" key={item.id}><span className="role-record-icon"><ClipboardList size={17}/></span><div><strong>{item.name}</strong><small>{item.subject || 'Subject not set'} · {item.assessment_date || 'Date not set'}</small></div><em className={`role-status ${item.status === 'published' ? 'success' : 'pending'}`}>{item.status || 'Draft'}</em></div>)}</div> : <div className="role-empty"><ClipboardList size={22}/><strong>No assessments yet</strong><span>Assessments for your assigned classes will appear here.</span></div>}
       </section>
     </div>
   </div>
+      <section className="role-dashboard-panel role-notifications-panel"><div className="role-panel-heading"><div><h2>School notifications</h2><p>Private messages from your school leadership</p></div><span className="role-notification-count">{data.notifications.filter(n=>!n.read_at).length} new</span></div>{loading?<p className="role-muted">Loading notifications…</p>:data.notifications.length?<div className="role-record-list">{data.notifications.slice(0,5).map(item=><article className="role-record" key={item.id}><span className="role-record-icon"><MessageCircle size={17}/></span><div><strong>{item.title}</strong><small>{item.message}</small><small>{new Date(item.created_at).toLocaleString('en-ZM')}</small></div>{!item.read_at&&<button className="role-notification-read" onClick={()=>apiRequest('/api/notifications/'+item.id+'/read',{method:'POST'}).then(()=>setData(v=>({...v,notifications:v.notifications.map(n=>n.id===item.id?{...n,read_at:new Date().toISOString()}:n)}))).catch(e=>addToast(e.message||'Could not mark notification as read.','error'))}>Mark read</button>}</article>)}</div>:<div className="role-empty"><MessageCircle size={22}/><strong>No notifications yet</strong><span>Messages from your school leadership will appear here.</span></div>}</section>
 }
 
 export function StudentDashboard() {
