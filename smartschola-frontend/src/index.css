@@ -1152,3 +1152,34 @@ body { background: var(--ss-page); color: var(--ss-ink); }
 
 
 .website-preview-brand{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border-bottom:1px solid #e8edf3;color:#1e3a59;font-size:13px}.website-preview-brand img,.website-preview-brand-placeholder{width:34px;height:34px;border-radius:9px;object-fit:contain;background:#edf2f8;display:grid;place-items:center}.website-preview-brand-placeholder{color:#66809b}
+
+
+/* Unified first-time registration and returning-user entry */
+.school-join-top-actions{display:flex;align-items:center;gap:22px}
+.school-join-existing{display:inline-flex;align-items:center;gap:8px;color:#173d68;text-decoration:none;font-size:12px;font-weight:800;padding:10px 13px;border:1px solid #d8e3ef;border-radius:10px;background:#fff}
+.school-join-existing:hover,.school-join-register-top a:hover{background:#edf4fb}
+.school-join-choice{padding:34px;display:grid;gap:15px}
+.school-join-choice-kicker{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#b18432}
+.school-join-choice h2{font-size:25px;line-height:1.2;color:#173353;margin:0}
+.school-join-choice>p{font-size:13px;line-height:1.7;color:#718197;margin:0 0 5px}
+.school-join-choice-login{display:flex;align-items:center;gap:13px;padding:17px;border:1px solid #dce6f0;border-radius:14px;background:#f8fbff;color:#173d68;text-decoration:none}
+.school-join-choice-login>span:first-child{width:43px;height:43px;display:grid;place-items:center;border-radius:12px;background:#e5eef8;color:#214e7e}
+.school-join-choice-login>span:nth-child(2){display:grid;gap:4px;flex:1}
+.school-join-choice-login strong,.school-join-choice-register strong{font-size:13px;color:#203b58}
+.school-join-choice-login small,.school-join-choice-register small{font-size:11px;line-height:1.5;color:#7c8a9c}
+.school-join-choice-divider{display:flex;align-items:center;gap:12px;color:#a0aaba;font-size:9px;font-weight:900;letter-spacing:1.3px;margin:6px 0}
+.school-join-choice-divider:before,.school-join-choice-divider:after{content:"";height:1px;flex:1;background:#e8edf3}
+.school-join-choice h3{font-size:15px;color:#203b58;margin:0}
+.school-join-choice-register{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.school-join-choice-register button{display:grid;justify-items:start;gap:9px;text-align:left;padding:17px;border:1px solid #e0e7ef;border-radius:14px;background:#fff;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s}
+.school-join-choice-register button:hover{border-color:#a8bfd8;box-shadow:0 8px 22px #18395b12;transform:translateY(-2px)}
+.school-join-choice-register button>span{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#edf3fa;color:#214e7e}
+.school-join-choice-register button em{display:flex;align-items:center;gap:6px;color:#9a702d;font-size:11px;font-style:normal;font-weight:850;margin-top:3px}
+.school-join-choice-note{display:flex;align-items:flex-start;gap:8px!important;padding:12px;border-radius:10px;background:#f1f7f3;color:#47745a!important;font-size:11px!important}
+.school-join-choice-note svg{flex:none;margin-top:1px}
+.school-join-register-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 20px;border-bottom:1px solid #e8edf3;background:#fbfcfe}
+.school-join-register-top button,.school-join-register-top a{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:#315d88;text-decoration:none;font-size:11px;font-weight:800;cursor:pointer;padding:7px 9px;border-radius:8px}
+.school-join-register-top span{font-size:9px;letter-spacing:1.2px;font-weight:900;color:#9a7a43}
+.login-register-prompt{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;color:#77869a;font-size:12px;margin:16px 0 4px}
+.login-register-prompt a{display:inline-flex;align-items:center;gap:4px;color:#1b5487;text-decoration:none;font-weight:800}
+@media(max-width:767px){.school-join-top-actions{gap:8px}.school-join-existing{font-size:10px;padding:8px}.school-join-brand{font-size:15px}.school-join-choice{padding:23px 18px}.school-join-choice h2{font-size:22px}.school-join-choice-register{grid-template-columns:1fr}.school-join-register-top{padding:10px 12px;flex-wrap:wrap}.school-join-register-top span{display:none}.school-join-form{padding:22px 18px}.school-join-shell{margin:22px auto;gap:18px}}
