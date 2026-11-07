@@ -1066,3 +1066,14 @@ body { background: var(--ss-page); color: var(--ss-ink); }
 .admission-row select{width:auto;max-width:135px;padding:7px;border:1px solid #dce5ef;border-radius:9px;background:#fff;color:#4d627c;font-size:9px;text-transform:capitalize}
 @media(max-width:1000px){.website-editor-layout{grid-template-columns:minmax(0,1fr)}.website-editor-preview{position:relative;top:auto}.admissions-layout{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:767px){.profile-settings-grid,.teacher-management-columns{grid-template-columns:minmax(0,1fr)}.teacher-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.teacher-summary-grid>div{grid-template-columns:1fr;gap:5px;padding:11px}.teacher-summary-grid svg{grid-row:auto;width:17px}.teacher-summary-grid strong{font-size:18px}.teacher-summary-grid span{font-size:8px}.website-save-bar{margin:16px -14px -26px;padding:12px 14px;flex-wrap:wrap}.website-save-bar>span{flex-basis:100%;margin:0}.admissions-two{grid-template-columns:minmax(0,1fr)}.admission-row{align-items:flex-start;flex-direction:column}.admission-row select{max-width:100%;width:100%}.profile-image-picker{align-items:flex-start}.workspace-header-menu-panel{right:12px}}
+
+
+.website-list-editor{display:grid;gap:9px;margin-top:13px;padding:13px;border:1px solid #e7edf4;border-radius:13px;background:#f9fbfd}
+.website-list-editor>div{display:flex;gap:8px;min-width:0}
+.website-list-editor input,.website-list-editor textarea{width:100%;min-width:0;padding:9px 10px;border:1px solid #dce5ef;border-radius:9px;background:#fff;color:#29425f;font-size:10px}
+.website-list-editor button{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;padding:8px 10px;border:1px solid #f0d9d9;border-radius:9px;background:#fff8f8;color:#b44d4d;font-size:9px;font-weight:800}
+.website-add-item{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:9px 12px;border:1px solid #dce7f3;border-radius:10px;background:#f4f8fd;color:#245e9b;font-size:10px;font-weight:850}
+.workspace-brand-mark img,.mobile-brand-mark img{width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff;padding:3px}
+.school-crest-mark img{width:100%;height:100%;object-fit:contain;padding:4px;border-radius:inherit;background:#fff}
+.school-news-image{background-size:cover;background-position:center}
+@media(max-width:767px){.website-list-editor>div{flex-wrap:wrap}.website-list-editor button{width:100%}}
