@@ -3,26 +3,35 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Users, BookOpen, ClipboardList, Award, Wallet, MessageSquare, Settings, LogOut, CalendarDays, GraduationCap, MoreHorizontal, X, Link2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
-const links = [
-  { to: '/workspace', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/workspace/students', icon: Users, label: 'Students' },
-  { to: '/workspace/student-access', icon: Link2, label: 'Student & Parent Access' },
-  { to: '/workspace/classes', icon: BookOpen, label: 'Classes' },
-  { to: '/workspace/academic-years', icon: CalendarDays, label: 'Academic Years' },
-  { to: '/workspace/marks', icon: ClipboardList, label: 'Mark Entry' },
-  { to: '/workspace/results', icon: Award, label: 'Results' },
-  { to: '/workspace/fees', icon: Wallet, label: 'Fee Tracker' },
-  { to: '/workspace/sms', icon: MessageSquare, label: 'SMS Center' },
-  { to: '/workspace/settings', icon: Settings, label: 'Settings' },
+const allLinks = [
+  { to: '/workspace', icon: LayoutDashboard, label: 'Dashboard', roles: ['headmaster', 'admin', 'teacher', 'student', 'parent'] },
+  { to: '/workspace/students', icon: Users, label: 'Students', roles: ['headmaster', 'admin'] },
+  { to: '/workspace/student-access', icon: Link2, label: 'Student & Parent Access', roles: ['headmaster', 'admin'] },
+  { to: '/workspace/classes', icon: BookOpen, label: 'Classes', roles: ['headmaster', 'admin'] },
+  { to: '/workspace/academic-years', icon: CalendarDays, label: 'Academic Years', roles: ['headmaster', 'admin'] },
+  { to: '/workspace/marks', icon: ClipboardList, label: 'Assessments & Marks', roles: ['headmaster', 'admin', 'teacher'] },
+  { to: '/workspace/results', icon: Award, label: 'Results', roles: ['headmaster', 'admin', 'teacher'] },
+  { to: '/workspace/fees', icon: Wallet, label: 'Fee Tracker', roles: ['headmaster', 'admin'] },
+  { to: '/workspace/sms', icon: MessageSquare, label: 'SMS Center', roles: ['headmaster', 'admin'] },
+  { to: '/workspace/settings', icon: Settings, label: 'Settings', roles: ['headmaster', 'admin'] },
 ]
-const mobilePrimary = links.slice(0, 4)
-const mobileMore = links.slice(4)
+const roleCaptions = {
+  headmaster: 'School leadership',
+  admin: 'School administration',
+  teacher: 'Teaching workspace',
+  student: 'Student portal',
+  parent: 'Parent portal'
+}
 
 export default function Sidebar() {
   const { currentUser, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
+  const role = currentUser?.role || 'headmaster'
+  const links = allLinks.filter(link => link.roles.includes(role))
+  const mobilePrimary = links.slice(0, 4)
+  const mobileMore = links.slice(4)
   const isMoreActive = mobileMore.some(link => location.pathname === link.to || location.pathname.startsWith(link.to + '/'))
 
   const handleLogout = () => {
@@ -32,82 +41,51 @@ export default function Sidebar() {
   }
 
   const navLinkClass = ({ isActive }) =>
-    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${isActive ? 'text-navy font-semibold' : 'text-white/65 hover:text-white hover:bg-white/5'}`
+    `workspace-nav-link ${isActive ? 'active' : ''}`
 
   return (
     <>
-      <aside className="desktop-sidebar w-64 flex-shrink-0 flex flex-col" style={{ background: '#0B1D3A' }}>
-        <div className="px-6 py-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ background: '#F5A623' }}>
-              <GraduationCap size={22} className="text-white" />
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-white text-lg leading-none">SmartSchola</h1>
-              <p className="text-white/45 text-xs mt-1">School Management</p>
-            </div>
-          </div>
+      <aside className="desktop-sidebar">
+        <div className="workspace-brand">
+          <div className="workspace-brand-mark"><GraduationCap size={23}/></div>
+          <div><h1>SmartSchola</h1><p>School Management</p></div>
         </div>
-        {currentUser && (
-          <div className="px-5 py-4 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#F5A623', color: '#0B1D3A' }}>
-                {(currentUser.full_name || currentUser.name || 'Admin')[0]}
-              </div>
-              <div className="min-w-0">
-                <p className="text-white text-sm font-medium truncate">{currentUser.full_name || currentUser.name}</p>
-                <span className="text-xs px-1.5 py-0.5 rounded capitalize" style={{ background: 'rgba(245,166,35,0.2)', color: '#F5A623' }}>{currentUser.role}</span>
-              </div>
-            </div>
-          </div>
-        )}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {links.map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} end={to === '/workspace'} className={navLinkClass}
-              style={({ isActive }) => isActive ? { background: '#F5A623', color: '#0B1D3A' } : {}}>
-              <Icon size={18} />{label}
-            </NavLink>
-          ))}
+        <div className="workspace-sidebar-user">
+          <span className="workspace-sidebar-avatar">{(currentUser?.full_name || currentUser?.name || 'U').slice(0,1).toUpperCase()}</span>
+          <div><strong>{currentUser?.full_name || currentUser?.name || 'School user'}</strong><small>{roleCaptions[role] || role}</small></div>
+        </div>
+        <div className="workspace-sidebar-section">WORKSPACE</div>
+        <nav className="workspace-sidebar-nav" aria-label="Workspace navigation">
+          {links.map(({ to, icon: Icon, label }) => <NavLink key={to} to={to} end={to === '/workspace'} className={navLinkClass}><Icon size={18}/><span>{label}</span></NavLink>)}
         </nav>
-        <div className="px-3 pb-4">
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/55 hover:text-red-300 hover:bg-red-500/10 transition-all">
-            <LogOut size={18} />Logout
-          </button>
+        <div className="workspace-sidebar-bottom">
+          <div className="workspace-sidebar-school"><span className="workspace-school-dot"/><span>Your school workspace</span></div>
+          <button onClick={handleLogout} className="workspace-logout"><LogOut size={18}/>Sign out</button>
         </div>
       </aside>
 
       <header className="mobile-app-header">
         <div className="mobile-brand">
-          <div className="mobile-brand-mark"><GraduationCap size={21} /></div>
-          <div><div className="mobile-brand-name">SmartSchola</div><div className="mobile-brand-caption">School management</div></div>
+          <div className="mobile-brand-mark"><GraduationCap size={21}/></div>
+          <div><div className="mobile-brand-name">SmartSchola</div><div className="mobile-brand-caption">{roleCaptions[role] || 'School workspace'}</div></div>
         </div>
-        <div className="mobile-user-chip" title={currentUser?.full_name || currentUser?.name || 'Administrator'}>
-          <span className="mobile-user-avatar">{(currentUser?.full_name || currentUser?.name || 'Admin')[0]}</span>
-          <span className="mobile-user-name">{currentUser?.full_name || currentUser?.name || 'Administrator'}</span>
+        <div className="mobile-user-chip" title={currentUser?.full_name || currentUser?.name || 'User'}>
+          <span className="mobile-user-avatar">{(currentUser?.full_name || currentUser?.name || 'U').slice(0,1).toUpperCase()}</span>
+          <span className="mobile-user-name">{currentUser?.full_name || currentUser?.name || 'User'}</span>
         </div>
       </header>
 
       <nav className="mobile-bottom-nav" aria-label="Main navigation">
-        {mobilePrimary.map(({ to, icon: Icon, label }) => (
-          <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
-            <Icon size={20} strokeWidth={2} /><span>{label === 'Mark Entry' ? 'Marks' : label}</span>
-          </NavLink>
-        ))}
-        <button type="button" className={`mobile-nav-item ${isMoreActive || moreOpen ? 'active' : ''}`} onClick={() => setMoreOpen(v => !v)} aria-expanded={moreOpen}>
-          {moreOpen ? <X size={20} /> : <MoreHorizontal size={20} />}<span>More</span>
-        </button>
+        {mobilePrimary.map(({ to, icon: Icon, label }) => <NavLink key={to} to={to} end={to === '/workspace'} className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}><Icon size={20} strokeWidth={2}/><span>{label === 'Assessments & Marks' ? 'Marks' : label}</span></NavLink>)}
+        <button type="button" className={`mobile-nav-item ${isMoreActive || moreOpen ? 'active' : ''}`} onClick={() => setMoreOpen(value => !value)} aria-expanded={moreOpen}><MoreHorizontal size={20}/><span>More</span></button>
       </nav>
 
-      {moreOpen && <button aria-label="Close navigation menu" className="mobile-menu-backdrop" onClick={() => setMoreOpen(false)} />}
+      {moreOpen && <button aria-label="Close navigation menu" className="mobile-menu-backdrop" onClick={() => setMoreOpen(false)}/>}
       <div className={`mobile-more-panel ${moreOpen ? 'open' : ''}`} aria-hidden={!moreOpen}>
-        <div className="mobile-more-heading"><span>More tools</span><button onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19}/></button></div>
-        {mobileMore.map(({ to, icon: Icon, label }) => (
-          <NavLink key={to} to={to} onClick={() => setMoreOpen(false)} className={({ isActive }) => `mobile-more-link ${isActive ? 'active' : ''}`}>
-            <span className="mobile-more-icon"><Icon size={18}/></span><span>{label}</span><span className="mobile-more-arrow">›</span>
-          </NavLink>
-        ))}
-        <button className="mobile-more-link mobile-logout" onClick={handleLogout}><span className="mobile-more-icon"><LogOut size={18}/></span><span>Log out</span><span className="mobile-more-arrow">›</span></button>
-        <div className="mobile-demo-note">Your school workspace</div>
+        <div className="mobile-more-heading"><span>Workspace menu</span><button onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19}/></button></div>
+        {mobileMore.map(({ to, icon: Icon, label }) => <NavLink key={to} to={to} onClick={() => setMoreOpen(false)} className={({ isActive }) => `mobile-more-link ${isActive ? 'active' : ''}`}><span className="mobile-more-icon"><Icon size={18}/></span><span>{label}</span><span className="mobile-more-arrow">›</span></NavLink>)}
+        <button className="mobile-more-link mobile-logout" onClick={handleLogout}><span className="mobile-more-icon"><LogOut size={18}/></span><span>Sign out</span><span className="mobile-more-arrow">›</span></button>
+        <div className="mobile-demo-note">{roleCaptions[role] || 'Your school workspace'}</div>
       </div>
     </>
   )
