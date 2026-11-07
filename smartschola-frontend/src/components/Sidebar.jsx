@@ -29,14 +29,14 @@ export default function Sidebar(){
  const navLinkClass=({isActive})=>`workspace-nav-link ${isActive?'active':''}`
  return <>
   <aside className="desktop-sidebar">
-   <div className="workspace-brand"><div className="workspace-brand-mark"><GraduationCap size={23}/></div><div><h1>SmartSchola</h1><p>School Management</p></div></div>
+   <div className="workspace-brand"><div className="workspace-brand-mark">{currentUser?.school_logo_data?<img src={currentUser.school_logo_data} alt="School logo"/>:<GraduationCap size={23}/>}</div><div><h1>SmartSchola</h1><p>School Management</p></div></div>
    <Link to="/workspace/profile" className="workspace-sidebar-user">{currentUser?.avatar_data?<img className="workspace-sidebar-avatar-image" src={currentUser.avatar_data} alt=""/>:<span className="workspace-sidebar-avatar">{(currentUser?.full_name||'U').slice(0,1).toUpperCase()}</span>}<div><strong>{currentUser?.full_name||'School user'}</strong><small>{roleCaptions[role]||role}</small></div></Link>
    <div className="workspace-sidebar-section">WORKSPACE</div>
    <nav className="workspace-sidebar-nav" aria-label="Workspace navigation">{links.map(({to,icon:Icon,label})=><NavLink key={to} to={to} end={to==='/workspace'} className={navLinkClass}><Icon size={18}/><span>{label}</span></NavLink>)}</nav>
    <div className="workspace-sidebar-bottom"><div className="workspace-sidebar-school"><span className="workspace-school-dot"/><span>Your school workspace</span></div><button onClick={handleLogout} className="workspace-logout"><LogOut size={18}/>Sign out</button></div>
   </aside>
   <header className="mobile-app-header">
-   <div className="mobile-brand"><div className="mobile-brand-mark"><GraduationCap size={21}/></div><div><div className="mobile-brand-name">SmartSchola</div><div className="mobile-brand-caption">{roleCaptions[role]||'School workspace'}</div></div></div>
+   <div className="mobile-brand"><div className="mobile-brand-mark">{currentUser?.school_logo_data?<img src={currentUser.school_logo_data} alt="School logo"/>:<GraduationCap size={21}/>}</div><div><div className="mobile-brand-name">SmartSchola</div><div className="mobile-brand-caption">{roleCaptions[role]||'School workspace'}</div></div></div>
    <div className="mobile-header-actions"><Link to="/workspace/profile" className="mobile-profile-link" aria-label="Open profile">{avatar(currentUser)}</Link><button type="button" className="mobile-header-menu" onClick={()=>setMoreOpen(v=>!v)} aria-label="Open workspace menu" aria-expanded={moreOpen}>{moreOpen?<X size={20}/>:<Menu size={20}/>}</button></div>
   </header>
   <nav className="mobile-bottom-nav" aria-label="Main navigation">{mobilePrimary.map(({to,icon:Icon,label})=><NavLink key={to} to={to} end={to==='/workspace'} className={({isActive})=>`mobile-nav-item ${isActive?'active':''}`}><Icon size={20}/><span>{label==='Assessments & Marks'?'Marks':label}</span></NavLink>)}<button type="button" className={`mobile-nav-item ${isMoreActive||moreOpen?'active':''}`} onClick={()=>setMoreOpen(v=>!v)} aria-expanded={moreOpen}><MoreHorizontal size={20}/><span>More</span></button></nav>
