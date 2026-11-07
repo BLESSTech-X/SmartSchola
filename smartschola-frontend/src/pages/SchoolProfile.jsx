@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { apiRequest } from '../lib/api.js'
 import { ArrowLeft, ArrowRight, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Clock3, Download, ExternalLink, Facebook, GraduationCap, Images, Instagram, MapPin, Menu, Megaphone, Phone, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
 
 const profiles = {
@@ -54,13 +55,26 @@ const imageUrl = (id, width = 1200) => `https://images.unsplash.com/${id}?auto=f
 
 export default function SchoolProfile() {
   const { slug } = useParams()
-  const school = profiles[slug]
+  const [liveData, setLiveData] = useState(null)
+  const baseSchool = profiles[slug]
+  const school = baseSchool ? {
+    ...baseSchool,
+    name: liveData?.school?.name || baseSchool.name,
+    location: liveData?.school?.location || baseSchool.location,
+    motto: liveData?.content?.motto || baseSchool.motto,
+    about: liveData?.content?.about || baseSchool.about,
+    logo_data: liveData?.school?.logo_data || null,
+    hero: baseSchool.hero.map((item,index)=>index===0?{...item,title:liveData?.content?.hero_title||liveData?.content?.headline||item.title,text:liveData?.content?.hero_text||liveData?.content?.intro||item.text}:item)
+  } : liveData ? {
+    name:liveData.school.name,location:liveData.school.location||'Zambia',type:'School',initials:(liveData.school.name||'SS').split(/\\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase(),motto:liveData.content?.motto||'Learning today. Leading tomorrow.',about:liveData.content?.about||liveData.content?.intro||'',logo_data:liveData.school.logo_data||null,
+    hero:[{title:liveData.content?.hero_title||liveData.content?.headline||'Welcome to our school',text:liveData.content?.hero_text||liveData.content?.intro||'',image:'photo-1503676260728-1c00da094a0b',label:'WELCOME TO OUR SCHOOL'}],gallery:[]
+  } : null
   const [slide, setSlide] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [galleryFilter, setGalleryFilter] = useState('All')
   const [activeImage, setActiveImage] = useState(null)
 
-  useEffect(() => { window.scrollTo(0, 0) }, [slug])
+  useEffect(() => { window.scrollTo(0, 0); setLiveData(null); apiRequest('/api/public/schools/'+encodeURIComponent(slug)+'/website').then(setLiveData).catch(()=>{}) }, [slug])
 
   if (!school) return <main className="school-profile-not-found"><GraduationCap size={42}/><h1>School profile not found</h1><p>This profile may not be published yet.</p><Link to="/" className="public-button primary">Back to SmartSchola <ArrowRight size={17}/></Link></main>
 
@@ -76,8 +90,8 @@ export default function SchoolProfile() {
     <div className="school-utility-bar"><div className="school-utility-inner"><span><MapPin size={13}/>{school.location}</span><span className="school-utility-message">A connected school community on SmartSchola</span><div className="school-socials"><a href="#school-contact" aria-label="Facebook"><Facebook size={14}/></a><a href="#school-contact" aria-label="Instagram"><Instagram size={14}/></a><Link to="/" aria-label="SmartSchola community"><Users size={14}/></Link></div></div></div>
     <header className="school-brand-header">
       <Link to="/" className="school-back-community"><ArrowLeft size={15}/> School community</Link>
-      <div className="school-crest"><span className={`school-crest-mark ${school.initials.toLowerCase()}`}><GraduationCap size={34}/></span><span className="school-crest-copy"><strong>{school.name}</strong><small>{school.motto}</small></span></div>
-      <Link to={`/login?school=${slug}`} className="school-header-portal"><ShieldCheck size={16}/> Portal sign in <ArrowRight size={15}/></Link>
+      <div className="school-crest"><span className={`school-crest-mark ${school.initials.toLowerCase()}`}>{school.logo_data?<img src={school.logo_data} alt="School logo"/>:<GraduationCap size={34}/>}</span><span className="school-crest-copy"><strong>{school.name}</strong><small>{school.motto}</small></span></div>
+      {liveData?.content?.admissions_open && <Link to={`/apply/${slug}`} className="school-header-portal"><GraduationCap size={16}/> Apply for admission <ArrowRight size={15}/></Link>}<Link to={`/login?school=${slug}`} className="school-header-portal"><ShieldCheck size={16}/> Portal sign in <ArrowRight size={15}/></Link>
       <button className="school-mobile-menu-toggle" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close school menu' : 'Open school menu'}>{menuOpen ? <X/> : <Menu/>}</button>
     </header>
     <nav className={`school-main-nav ${menuOpen ? 'open' : ''}`} aria-label="School sections">
