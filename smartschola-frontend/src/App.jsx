@@ -74,7 +74,7 @@ function ProtectedLayout() {
         {menuOpen&&<nav className="workspace-header-menu-panel">
           <Link onClick={()=>setMenuOpen(false)} to="/workspace">Dashboard</Link>
           {isSchoolAdmin&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/students">Students</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/admissions">Admissions</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/teachers">Teachers</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/classes">Classes</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/website">School website</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/settings">Settings</Link></>}
-          {isTeachingStaff&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/marks">Marks</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/results">Results</Link></>}{role==='teacher'&&<Link onClick={()=>setMenuOpen(false)} to="/workspace/learner-requests">Learner requests</Link>}
+          {isTeachingStaff&&<><Link onClick={()=>setMenuOpen(false)} to="/workspace/marks">Marks</Link><Link onClick={()=>setMenuOpen(false)} to="/workspace/results">Results</Link></>}{['teacher','admin'].includes(role)&&<Link onClick={()=>setMenuOpen(false)} to="/workspace/learner-requests">Learner requests</Link>}
           <Link onClick={()=>setMenuOpen(false)} to="/workspace/profile">Profile settings</Link>
         </nav>}
       </header>
@@ -94,7 +94,7 @@ function ProtectedLayout() {
           <Route path="teachers" element={isSchoolAdmin ? <TeacherManagement/> : <Navigate to="/workspace" replace/>}/>
           <Route path="website" element={isSchoolAdmin ? <SchoolWebsite/> : <Navigate to="/workspace" replace/>}/>
           <Route path="admissions" element={isSchoolAdmin ? <Admissions/> : <Navigate to="/workspace" replace/>}/>
-          <Route path="learner-requests" element={role === "teacher" ? <LearnerRequests/> : <Navigate to="/workspace" replace/>}/>
+          <Route path="learner-requests" element={["teacher","admin"].includes(role) ? <LearnerRequests/> : <Navigate to="/workspace" replace/>}/>
           <Route path="*" element={<Navigate to="/workspace" replace/>}/>
         </Routes>
       </div>
