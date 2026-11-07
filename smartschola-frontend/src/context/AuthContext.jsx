@@ -35,6 +35,8 @@ export function AuthProvider({ children }) {
     setCurrentUser(user)
   }, [])
 
+  const updateCurrentUser = useCallback((patch) => { setCurrentUser(previous => { const next = { ...(previous || {}), ...(patch || {}) }; localStorage.setItem('user', JSON.stringify(next)); return next }) }, [])
+
   const logout = useCallback(() => {
     const activeToken = localStorage.getItem('token')
     if (activeToken) apiRequest('/api/auth/logout', { method: 'POST', token: activeToken }).catch(() => {})
@@ -44,7 +46,7 @@ export function AuthProvider({ children }) {
     setCurrentUser(null)
   }, [])
 
-  return <AuthContext.Provider value={{ token, currentUser, isAuthenticated: Boolean(token && currentUser), login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ token, currentUser, isAuthenticated: Boolean(token && currentUser), login, logout, updateCurrentUser }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)
