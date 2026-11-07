@@ -1146,3 +1146,6 @@ body { background: var(--ss-page); color: var(--ss-ink); }
 
 
 .teacher-manual-photo-preview{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid #e5edf6;margin:2px 0 8px}
+
+
+.school-card-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}.school-card-actions .school-card-link{margin-top:0}.school-card-signin{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid #d8e4ef;border-radius:9px;text-decoration:none;color:#355b80;font-size:12px;font-weight:800;background:#f8fbff}
