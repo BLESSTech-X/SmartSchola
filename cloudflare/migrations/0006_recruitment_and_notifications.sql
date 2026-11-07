@@ -48,3 +48,15 @@ CREATE TABLE IF NOT EXISTS school_notifications (
 );
 CREATE INDEX IF NOT EXISTS school_notifications_recipient_idx
   ON school_notifications(school_id,recipient_user_id,created_at DESC);
+
+-- Teacher administrators remain eligible for class responsibilities.
+DROP TRIGGER IF EXISTS class_teacher_membership_insert;
+DROP TRIGGER IF EXISTS class_teacher_membership_update;
+CREATE TRIGGER class_teacher_membership_insert
+BEFORE INSERT ON class_teachers
+WHEN NOT EXISTS (SELECT 1 FROM school_memberships m WHERE m.id=NEW.membership_id AND m.school_id=NEW.school_id AND m.role IN ('teacher','admin') AND m.status='active')
+BEGIN SELECT RAISE(ABORT,'Only active teaching staff from this school can be assigned'); END;
+CREATE TRIGGER class_teacher_membership_update
+BEFORE UPDATE OF membership_id,school_id,class_id ON class_teachers
+WHEN NOT EXISTS (SELECT 1 FROM school_memberships m WHERE m.id=NEW.membership_id AND m.school_id=NEW.school_id AND m.role IN ('teacher','admin') AND m.status='active')
+BEGIN SELECT RAISE(ABORT,'Only active teaching staff from this school can be assigned'); END;
