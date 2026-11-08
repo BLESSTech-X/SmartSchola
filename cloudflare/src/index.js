@@ -44,8 +44,8 @@ if(publicParentApply&&r.method==="POST"){
  const school=await env.DB.prepare("SELECT id FROM schools WHERE slug=? AND status='verified'").bind(publicParentApply[1]).first();
  if(!school)return err(404,"School not found or not accepting registrations.");
  const b=await body(r),name=String(b.full_name||"").trim(),email=String(b.email||"").trim().toLowerCase(),password=String(b.password||""),phone=String(b.phone||"").trim(),relationship=String(b.relationship||"Parent / Guardian").trim();
- const numbers=[...new Set((Array.isArray(b.student_numbers)?b.student_numbers:[b.student_numbers||b.student_number||""]).flatMap(x=>String(x||"").split(/[\\s,;]+/)).map(x=>x.trim()).filter(Boolean))];
- if(name.length<2||name.length>160||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||password.length<10||password.length>128||phone.length<7||phone.length>40||!numbers.length||numbers.length>20||relationship.length<2||relationship.length>40)return err(400,"Enter your name, valid email, password, phone, relationship and at least one student number.");
+ const numbers=[...new Set((Array.isArray(b.student_numbers)?b.student_numbers:[b.student_numbers||b.student_number||""]).flatMap(x=>String(x||"").split(/[\s,;]+/)).map(x=>x.trim()).filter(Boolean))];
+ if(name.length<2||name.length>160||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||password.length<10||password.length>128||phone.length<7||phone.length>40||!numbers.length||numbers.length>20||relationship.length<2||relationship.length>40)return err(400,"Enter your name, valid email, password, phone, relationship and at least one student number.");
  const placeholders=numbers.map(()=>"?").join(",");
  const found=await env.DB.prepare("SELECT id,student_number FROM students WHERE school_id=? AND status='active' AND student_number IN ("+placeholders+")").bind(school.id,...numbers).all();
  const students=found.results||[];
